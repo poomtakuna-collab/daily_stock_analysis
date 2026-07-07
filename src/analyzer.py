@@ -205,6 +205,16 @@ def _is_ollama_litellm_route(model: str, model_list: Optional[List[Dict[str, Any
     return False
 
 
+def _should_retry_ollama_without_json_mode(error: Exception) -> bool:
+    """Return whether Ollama JSON mode likely produced an underfilled object."""
+    if not isinstance(error, GenerationError):
+        return False
+    if error.error_code is not GenerationErrorCode.SCHEMA_VALIDATION_FAILED:
+        return False
+    details = error.details or {}
+    return details.get("reason") == "minimal_contract_failed"
+
+
 def _normalize_risk_warning_values(value: Any) -> List[str]:
     """Normalize arbitrary risk_warning values into a flat list of text alerts."""
     if value is None:
@@ -3253,7 +3263,12 @@ class GeminiAnalyzer:
                     ],
                     "max_tokens": max_tokens,
                 }
-                if response_validator is not None and _is_ollama_litellm_route(model, recovery_model_list):
+                is_ollama_validated_call = (
+                    response_validator is not None
+                    and _is_ollama_litellm_route(model, recovery_model_list)
+                )
+                if is_ollama_validated_call:
+                    logger.info("[LiteLLM] %s ollama_json_mode first attempt", model)
                     call_kwargs["response_format"] = {"type": "json_object"}
                 if requested_timeout not in (None, ""):
                     call_kwargs["timeout"] = requested_timeout
@@ -3296,6 +3311,39 @@ class GeminiAnalyzer:
 
                 _stream_text: Optional[str] = None
                 _stream_usage: Dict[str, Any] = {}
+
+                def _call_plain_ollama_retry() -> Tuple[str, str, Dict[str, Any]]:
+                    retry_kwargs = dict(call_kwargs)
+                    retry_kwargs.pop("response_format", None)
+                    logger.info("[LiteLLM] %s ollama_plain_retry second attempt", model)
+                    retry_response = call_litellm_with_param_recovery(
+                        lambda kwargs: self._dispatch_litellm_completion(
+                            model,
+                            kwargs,
+                            config=config,
+                            use_channel_router=use_channel_router,
+                            router_model_names=router_model_names,
+                        ),
+                        model=model,
+                        call_kwargs=retry_kwargs,
+                        model_list=recovery_model_list,
+                        logger=logger,
+                    )
+                    retry_content = self._extract_completion_text(retry_response)
+                    if not retry_content:
+                        raise ValueError("LLM returned empty response")
+                    retry_usage_messages = None if audit_context is not None else retry_kwargs["messages"]
+                    retry_usage = self._normalize_usage(
+                        extract_usage_payload(retry_response),
+                        model=usage_model or model,
+                        provider=usage_provider,
+                        messages=retry_usage_messages,
+                    )
+                    if audit_context is not None:
+                        retry_usage = _attach_usage_audit(retry_usage, retry_kwargs["messages"])
+                    if response_validator is not None:
+                        response_validator(retry_content)
+                    return retry_content, model, retry_usage
 
                 if model_stream:
                     try:
@@ -3349,7 +3397,20 @@ class GeminiAnalyzer:
                     _stream_usage = _attach_usage_audit(_stream_usage, call_kwargs["messages"])
                     last_usage = _stream_usage
                     if response_validator is not None:
-                        response_validator(_stream_text)
+                        try:
+                            response_validator(_stream_text)
+                        except Exception as validation_error:
+                            if (
+                                is_ollama_validated_call
+                                and "response_format" in call_kwargs
+                                and _should_retry_ollama_without_json_mode(validation_error)
+                            ):
+                                retry_text, retry_model, retry_usage = _call_plain_ollama_retry()
+                                last_response_text = retry_text
+                                last_model = retry_model
+                                last_usage = retry_usage
+                                return retry_text, retry_model, retry_usage
+                            raise
                     return _stream_text, model, _stream_usage
 
                 response = call_litellm_with_param_recovery(
@@ -3381,7 +3442,20 @@ class GeminiAnalyzer:
                     last_model = model
                     last_usage = usage
                     if response_validator is not None:
-                        response_validator(content)
+                        try:
+                            response_validator(content)
+                        except Exception as validation_error:
+                            if (
+                                is_ollama_validated_call
+                                and "response_format" in call_kwargs
+                                and _should_retry_ollama_without_json_mode(validation_error)
+                            ):
+                                retry_text, retry_model, retry_usage = _call_plain_ollama_retry()
+                                last_response_text = retry_text
+                                last_model = retry_model
+                                last_usage = retry_usage
+                                return retry_text, retry_model, retry_usage
+                            raise
                     return (content, model, usage)
                 raise ValueError("LLM returned empty response")
 

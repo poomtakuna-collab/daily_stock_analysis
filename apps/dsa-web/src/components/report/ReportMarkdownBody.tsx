@@ -1,6 +1,7 @@
 import type React from 'react';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { localizeKnownReportMarkdownLabels } from '../../utils/reportLanguage';
 
 interface ReportMarkdownBodyProps {
   content: string;
@@ -34,7 +35,7 @@ export const ReportMarkdownBody: React.FC<ReportMarkdownBodyProps> = ({
     `}
   >
     <Markdown remarkPlugins={[remarkGfm]}>
-      {content}
+      {localizeKnownReportMarkdownLabels(content)}
     </Markdown>
   </div>
 );

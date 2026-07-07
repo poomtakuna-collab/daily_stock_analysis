@@ -10,7 +10,7 @@ import type {
   ReportLanguage,
 } from '../../types/analysis';
 import { markdownToPlainText } from '../../utils/markdown';
-import { getReportText, normalizeReportLanguage } from '../../utils/reportLanguage';
+import { getReportText, localizeKnownReportHeading, normalizeReportLanguage } from '../../utils/reportLanguage';
 import { Card } from '../common';
 import { Tooltip } from '../common/Tooltip';
 import { ReportMarkdownBody } from './ReportMarkdownBody';
@@ -106,7 +106,7 @@ const splitMarketReviewSections = (markdown: string): MarketReviewSection[] => {
   if (matches.length === 0) {
     return [{
       id: 'full-review',
-      title: '复盘正文',
+      title: localizeKnownReportHeading('复盘正文'),
       content: markdown,
       icon: FileText,
     }];
@@ -116,7 +116,7 @@ const splitMarketReviewSections = (markdown: string): MarketReviewSection[] => {
   const sections: MarketReviewSection[] = intro
     ? [{
         id: 'overview',
-        title: '复盘概览',
+        title: localizeKnownReportHeading('复盘概览'),
         content: intro,
         icon: FileText,
       }]
@@ -132,7 +132,7 @@ const splitMarketReviewSections = (markdown: string): MarketReviewSection[] => {
     }
     sections.push({
       id: `${index}-${normalizeHeading(title).replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '') || 'section'}`,
-      title,
+      title: localizeKnownReportHeading(title),
       content,
       icon: getSectionIcon(title),
     });
@@ -152,7 +152,7 @@ const getPayloadSections = (payload?: MarketReviewPayload | null): MarketReviewS
       return getPayloadSections(marketPayload).map((section) => ({
         ...section,
         id: `${region}-${section.id}`,
-        title: `${marketTitle} / ${section.title}`,
+        title: `${marketTitle} / ${localizeKnownReportHeading(section.title)}`,
       }));
     });
   }
@@ -163,7 +163,7 @@ const getPayloadSections = (payload?: MarketReviewPayload | null): MarketReviewS
     .filter((section: MarketReviewPayloadSection) => normalizeHeading(section.title || '') !== payloadTitle)
     .map((section, index) => ({
       id: `${section.key || index}-${normalizeHeading(section.title).replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-') || 'section'}`,
-      title: section.title || 'Review',
+      title: localizeKnownReportHeading(section.title || 'Review'),
       content: section.markdown,
       icon: getSectionIcon(section.title || ''),
     }));
@@ -385,7 +385,9 @@ export const MarketReviewReportView: React.FC<MarketReviewReportViewProps> = ({
   const error = loadError && loadError.recordId === recordId ? loadError.message : null;
   const hasStructuredContent = Boolean(marketReviewPayload?.sections?.length || marketReviewPayload?.markets);
   const isLoading = Boolean(recordId && !providedContent && !hasStructuredContent && loadedMarkdown?.recordId !== recordId && !error);
-  const displayTitle = marketReviewPayload?.rootTitle || marketReviewPayload?.title || meta?.stockName || 'Market Review';
+  const displayTitle = localizeKnownReportHeading(
+    marketReviewPayload?.rootTitle || marketReviewPayload?.title || meta?.stockName || 'Market Review',
+  );
   const structuredContent = useMemo(
     () => stripTopHeading(content, displayTitle),
     [content, displayTitle],

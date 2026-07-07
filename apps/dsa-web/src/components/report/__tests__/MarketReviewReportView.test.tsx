@@ -127,6 +127,30 @@ describe('MarketReviewReportView', () => {
     expect(screen.queryByText('暂无摘要')).not.toBeInTheDocument();
   });
 
+  it('localizes known Chinese market review section titles in card rendering', () => {
+    render(
+      <MarketReviewReportView
+        report={englishMarketReviewReport}
+        content={[
+          '# \u5927\u76d8\u590d\u76d8',
+          '## \u4e00\u3001\u76d8\u9762\u603b\u89c8',
+          '\u8fd9\u91cc\u662f\u539f\u59cb\u5206\u6790\u6bb5\u843d\u3002',
+          '## \u4e8c\u3001\u6307\u6570\u7ed3\u6784',
+          '\u6307\u6570\u8868\u73b0\u5206\u5316\u3002',
+          '## \u4e09\u3001\u677f\u5757\u4e3b\u7ebf',
+          '\u677f\u5757\u8f6e\u52a8\u52a0\u5feb\u3002',
+        ].join('\n')}
+        reportLanguage="zh"
+      />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Market Review' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Market Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Index Structure' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Sector Themes' })).toBeInTheDocument();
+    expect(screen.getByText('\u8fd9\u91cc\u662f\u539f\u59cb\u5206\u6790\u6bb5\u843d\u3002')).toBeInTheDocument();
+  });
+
   it('renders structured data for every market in a combined market review payload', () => {
     render(
       <MarketReviewReportView
@@ -297,7 +321,7 @@ describe('MarketReviewReportView', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '查看历史记录 7 运行流' }));
+    fireEvent.click(screen.getByRole('button', { name: 'View run flow for history record 7' }));
 
     expect(onOpenRunFlow).toHaveBeenCalledWith(7);
   });

@@ -482,6 +482,60 @@ class TestAnalyzerGenerateText:
         call_kwargs = dispatch.call_args.args[1]
         assert call_kwargs["response_format"] == {"type": "json_object"}
 
+    def test_call_litellm_impl_retries_ollama_without_json_mode_after_empty_object(self, caplog):
+        from src.llm.generation_backend import GenerationError, GenerationErrorCode
+
+        analyzer = self._make_analyzer()
+        analyzer._config_override.litellm_model = "ollama/qwen3:14b"
+        analyzer._config_override.gemini_api_keys = []
+        analyzer._config_override.llm_model_list = []
+        valid_json = '{"sentiment_score":70,"trend_prediction":"hold","operation_advice":"hold","analysis_summary":"ok"}'
+        responses = [
+            SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content="{}"))],
+                usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1, total_tokens=2),
+            ),
+            SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content=valid_json))],
+                usage=SimpleNamespace(prompt_tokens=3, completion_tokens=5, total_tokens=8),
+            ),
+        ]
+        validator_calls = []
+
+        def validator(text):
+            validator_calls.append(text)
+            if text == "{}":
+                raise GenerationError(
+                    error_code=GenerationErrorCode.SCHEMA_VALIDATION_FAILED,
+                    stage="validation",
+                    retryable=True,
+                    fallbackable=True,
+                    backend="litellm",
+                    details={
+                        "reason": "minimal_contract_failed",
+                        "message": "analysis JSON does not contain any minimal parser field",
+                    },
+                )
+
+        caplog.set_level("INFO", logger="src.analyzer")
+        with patch.object(analyzer, "_dispatch_litellm_completion", side_effect=responses) as dispatch:
+            result = analyzer._call_litellm_impl(
+                "prompt",
+                {"max_tokens": 128, "temperature": 0.2},
+                system_prompt="system",
+                response_validator=validator,
+            )
+
+        assert result[0] == valid_json
+        assert validator_calls == ["{}", valid_json]
+        assert dispatch.call_count == 2
+        first_kwargs = dispatch.call_args_list[0].args[1]
+        second_kwargs = dispatch.call_args_list[1].args[1]
+        assert first_kwargs["response_format"] == {"type": "json_object"}
+        assert "response_format" not in second_kwargs
+        assert "ollama_json_mode first attempt" in caplog.text
+        assert "ollama_plain_retry second attempt" in caplog.text
+
     def test_generate_text_does_not_enable_json_mode_for_ollama_market_review(self):
         analyzer = self._make_analyzer()
         analyzer._config_override.litellm_model = "ollama/qwen3:14b"
@@ -522,6 +576,43 @@ class TestAnalyzerGenerateText:
 
         call_kwargs = dispatch.call_args.args[1]
         assert "response_format" not in call_kwargs
+
+    def test_call_litellm_impl_does_not_plain_retry_openai_validation_failure(self):
+        from src.analyzer import _AllModelsFailedError
+        from src.llm.generation_backend import GenerationError, GenerationErrorCode
+
+        analyzer = self._make_analyzer()
+        analyzer._config_override.litellm_model = "openai/gpt-5.5"
+        analyzer._config_override.gemini_api_keys = []
+        analyzer._config_override.openai_api_keys = ["sk-openai-testkey-1234"]
+        analyzer._config_override.llm_model_list = []
+
+        response = SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="{}"))],
+            usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1, total_tokens=2),
+        )
+
+        def validator(_text):
+            raise GenerationError(
+                error_code=GenerationErrorCode.SCHEMA_VALIDATION_FAILED,
+                stage="validation",
+                retryable=True,
+                fallbackable=True,
+                backend="litellm",
+                details={"reason": "minimal_contract_failed"},
+            )
+
+        with patch.object(analyzer, "_dispatch_litellm_completion", return_value=response) as dispatch:
+            with pytest.raises(_AllModelsFailedError):
+                analyzer._call_litellm_impl(
+                    "prompt",
+                    {"max_tokens": 128, "temperature": 0.2},
+                    system_prompt="system",
+                    response_validator=validator,
+                )
+
+        assert dispatch.call_count == 1
+        assert "response_format" not in dispatch.call_args.args[1]
 
     def test_call_litellm_wraps_fallback_generation_error_with_primary_context(self):
         from src.llm.generation_backend import GenerationBackend, GenerationError, GenerationErrorCode

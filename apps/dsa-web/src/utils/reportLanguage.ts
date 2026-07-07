@@ -148,3 +148,44 @@ export const getReportText = (language?: string | null) => {
   const normalized = normalizeReportLanguage(language);
   return REPORT_TEXT[normalized === 'zh' ? 'en' : normalized];
 };
+
+const KNOWN_REPORT_HEADING_LABELS: Record<string, string> = {
+  '\u5927\u76d8\u590d\u76d8': 'Market Review',
+  '\u5927\u76d8\u590d\u76d8\u8be6\u60c5': 'Market Review',
+  'a\u80a1\u5e02\u573a\u590d\u76d8': 'Market Review',
+  'a \u80a1\u5e02\u573a\u590d\u76d8': 'Market Review',
+  '\u76d8\u9762\u603b\u89c8': 'Market Overview',
+  '\u6307\u6570\u7ed3\u6784': 'Index Structure',
+  '\u677f\u5757\u4e3b\u7ebf': 'Sector Themes',
+  '\u76d8\u9762\u4fe1\u53f7': 'Market Signal',
+  '\u8fd1\u4e09\u65e5\u5e02\u573a\u7ebf\u7d22': 'Recent Market Catalysts',
+  '\u590d\u76d8\u6b63\u6587': 'Review Body',
+  '\u590d\u76d8\u6982\u89c8': 'Review Overview',
+};
+
+const normalizeKnownReportHeading = (value: string): string =>
+  value
+    .trim()
+    .replace(/^#+\s*/, '')
+    .replace(/[*_`~]/g, '')
+    .replace(/^\s*[一二三四五六七八九十]+[、.．]\s*/, '')
+    .replace(/[：:]\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+
+export const localizeKnownReportHeading = (value: string): string =>
+  KNOWN_REPORT_HEADING_LABELS[normalizeKnownReportHeading(value)] ?? value;
+
+export const localizeKnownReportMarkdownLabels = (markdown: string): string =>
+  markdown
+    .replace(/^(\s{0,3}#{1,6}\s+)(.+?)(\s*#*\s*)$/gm, (line, prefix: string, title: string, suffix: string) => {
+      const localizedTitle = localizeKnownReportHeading(title);
+      return localizedTitle === title ? line : `${prefix}${localizedTitle}${suffix}`;
+    })
+    .replace(
+      /^(\s*(?:[-*+]\s+|\d+[.)]\s+)?(?:\*\*)?)([\u4e00-\u9fa5A-Za-z0-9\s、.．]+?)((?:\*\*)?\s*[：:])/gm,
+      (line, prefix: string, label: string, suffix: string) => {
+        const localizedLabel = localizeKnownReportHeading(label);
+        return localizedLabel === label ? line : `${prefix}${localizedLabel}${suffix.replace(/[：:]\s*$/, ': ')}`;
+      },
+    );
