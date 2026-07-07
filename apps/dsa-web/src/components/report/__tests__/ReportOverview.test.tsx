@@ -44,9 +44,9 @@ describe('ReportOverview', () => {
       />,
     );
 
-    expect(screen.getByLabelText('市场阶段: CN · 盘中')).toBeInTheDocument();
-    expect(screen.getByText('市场阶段: CN · 盘中')).toBeVisible();
-    expect(screen.getByLabelText('日线未完成')).toBeInTheDocument();
+    expect(screen.getByLabelText('Market phase: CN · Intraday')).toBeInTheDocument();
+    expect(screen.getByText('Market phase: CN · Intraday')).toBeVisible();
+    expect(screen.getByLabelText('Partial bar')).toBeInTheDocument();
   });
 
   it('renders English final market phase and partial-bar labels', () => {
@@ -104,15 +104,15 @@ describe('ReportOverview', () => {
       />,
     );
 
-    expect(screen.getByText('市场阶段: 阶段未知')).toBeVisible();
-    expect(screen.queryByText('日线未完成')).not.toBeInTheDocument();
+    expect(screen.getByText('Market phase: Unknown phase')).toBeVisible();
+    expect(screen.queryByText('Partial bar')).not.toBeInTheDocument();
   });
 
   it('does not render a market phase placeholder for legacy reports', () => {
     render(<ReportOverview meta={baseMeta} summary={baseSummary} />);
 
-    expect(screen.queryByText(/市场阶段/)).not.toBeInTheDocument();
-    expect(screen.queryByText('日线未完成')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Market phase/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Partial bar')).not.toBeInTheDocument();
   });
 
   it('renders related boards with leading and lagging markers', () => {
@@ -138,14 +138,14 @@ describe('ReportOverview', () => {
       />,
     );
 
-    expect(screen.getByText('关联板块')).toBeInTheDocument();
+    expect(screen.getByText('Related Boards')).toBeInTheDocument();
     expect(screen.getByText('白酒')).toBeInTheDocument();
-    expect(screen.getAllByText('领涨')).toHaveLength(2);
+    expect(screen.getAllByText('Leading')).toHaveLength(2);
     expect(screen.getByText('+2.31%')).toBeInTheDocument();
     expect(screen.getByText('+4.56%')).toBeInTheDocument();
-    expect(screen.getByText('领跌')).toBeInTheDocument();
+    expect(screen.getByText('Lagging')).toBeInTheDocument();
     expect(screen.getByText('-1.20%')).toBeInTheDocument();
-    expect(screen.queryByText('中性')).not.toBeInTheDocument();
+    expect(screen.queryByText('Neutral')).not.toBeInTheDocument();
   });
 
   it('does not apply industry ranking to a concept board with the same name', () => {
@@ -168,8 +168,8 @@ describe('ReportOverview', () => {
     );
 
     expect(screen.getByText('白酒')).toBeInTheDocument();
-    expect(screen.getByText('关联板块')).toBeInTheDocument();
-    expect(screen.getByText('领跌')).toBeInTheDocument();
+    expect(screen.getByText('Related Boards')).toBeInTheDocument();
+    expect(screen.getByText('Lagging')).toBeInTheDocument();
     expect(screen.getByText('-3.20%')).toBeInTheDocument();
     expect(screen.queryByText('+2.31%')).not.toBeInTheDocument();
   });
@@ -201,7 +201,7 @@ describe('ReportOverview', () => {
       />,
     );
 
-    const relatedBoardsRegion = screen.getByRole('region', { name: '关联板块' });
+    const relatedBoardsRegion = screen.getByRole('region', { name: 'Related Boards' });
 
     expect(within(relatedBoardsRegion).getByText(sectorRankingBoard)).toBeInTheDocument();
     expect(within(relatedBoardsRegion).getByText(conceptRankingBoard)).toBeInTheDocument();
@@ -225,12 +225,12 @@ describe('ReportOverview', () => {
       />,
     );
 
-    const actionAdviceTitle = screen.getByText('操作建议');
-    const relatedBoardsRegion = screen.getByRole('region', { name: '关联板块' });
+    const actionAdviceTitle = screen.getByText('Action Advice');
+    const relatedBoardsRegion = screen.getByRole('region', { name: 'Related Boards' });
     const boardLists = container.querySelectorAll('.home-related-board-list');
 
     expect(actionAdviceTitle.compareDocumentPosition(relatedBoardsRegion) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByText('关联板块')).toBeInTheDocument();
+    expect(screen.getByText('Related Boards')).toBeInTheDocument();
     expect(screen.getByText('沪股通')).toBeInTheDocument();
     expect(boardLists[0]).toHaveClass(
       'flex-nowrap',
@@ -253,11 +253,11 @@ describe('ReportOverview', () => {
       />,
     );
 
-    expect(screen.getByText('关联板块')).toBeInTheDocument();
+    expect(screen.getByText('Related Boards')).toBeInTheDocument();
     expect(screen.getByText('半导体')).toBeInTheDocument();
-    expect(screen.queryByText('中性')).not.toBeInTheDocument();
-    expect(screen.queryByText('领涨')).not.toBeInTheDocument();
-    expect(screen.queryByText('领跌')).not.toBeInTheDocument();
+    expect(screen.queryByText('Neutral')).not.toBeInTheDocument();
+    expect(screen.queryByText('Leading')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lagging')).not.toBeInTheDocument();
   });
 
   it('shows only the board when a matching ranking has no change percent', () => {
@@ -275,17 +275,17 @@ describe('ReportOverview', () => {
       />,
     );
 
-    expect(screen.getByText('关联板块')).toBeInTheDocument();
+    expect(screen.getByText('Related Boards')).toBeInTheDocument();
     expect(screen.getByText('白酒')).toBeInTheDocument();
     expect(screen.queryByText('行业')).not.toBeInTheDocument();
-    expect(screen.queryByText('领涨')).not.toBeInTheDocument();
-    expect(screen.queryByText('领跌')).not.toBeInTheDocument();
+    expect(screen.queryByText('Leading')).not.toBeInTheDocument();
+    expect(screen.queryByText('Lagging')).not.toBeInTheDocument();
   });
 
   it('hides related boards section when no boards are available', () => {
     render(<ReportOverview meta={baseMeta} summary={baseSummary} details={{ belongBoards: [] }} />);
 
-    expect(screen.queryByText('板块联动')).not.toBeInTheDocument();
+    expect(screen.queryByText('BOARD LINKAGE')).not.toBeInTheDocument();
   });
 
   it('fails open on malformed ranking payloads', () => {
@@ -303,9 +303,9 @@ describe('ReportOverview', () => {
       />,
     );
 
-    expect(screen.getByText('关联板块')).toBeInTheDocument();
+    expect(screen.getByText('Related Boards')).toBeInTheDocument();
     expect(screen.getByText('白酒')).toBeInTheDocument();
-    expect(screen.getByText('领跌')).toBeInTheDocument();
+    expect(screen.getByText('Lagging')).toBeInTheDocument();
     expect(screen.getByText('-2.50%')).toBeInTheDocument();
   });
 });

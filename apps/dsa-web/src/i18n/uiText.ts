@@ -1593,7 +1593,7 @@ const en: Record<UiTextKey, string> = {
 };
 
 export const UI_TEXT: Record<UiLanguage, Record<UiTextKey, string>> = {
-  zh,
+  zh: en,
   en,
 };
 

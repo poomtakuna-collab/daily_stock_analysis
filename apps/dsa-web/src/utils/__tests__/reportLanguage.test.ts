@@ -18,8 +18,8 @@ describe('reportLanguage ko support', () => {
     expect(ko.fullReport).toBe('전체 분석 리포트');
   });
 
-  it('keeps zh/en report copy unchanged', () => {
-    expect(getReportText('zh').keyInsights).toBe('核心洞察');
+  it('uses English display copy for zh/en report labels', () => {
+    expect(getReportText('zh').keyInsights).toBe('KEY INSIGHTS');
     expect(getReportText('en').keyInsights).toBe('KEY INSIGHTS');
   });
 

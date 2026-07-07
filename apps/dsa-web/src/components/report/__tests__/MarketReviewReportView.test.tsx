@@ -153,15 +153,15 @@ describe('MarketReviewReportView', () => {
       />,
     );
 
-    expect(screen.getAllByText('行业板块')).toHaveLength(2);
-    expect(screen.getAllByText('概念板块')).toHaveLength(2);
+    expect(screen.getAllByText('Industry Sectors')).toHaveLength(2);
+    expect(screen.getAllByText('Concept Themes')).toHaveLength(2);
     expect(screen.getByText('半导体')).toBeInTheDocument();
     expect(screen.getByText('机器人概念')).toBeInTheDocument();
     expect(screen.getByText('+4.20%')).toBeInTheDocument();
     expect(screen.getByText('-2.05%')).toBeInTheDocument();
   });
 
-  it('localizes structured market data labels for Chinese reports', () => {
+  it('uses English structured market data labels for Chinese reports', () => {
     render(
       <MarketReviewReportView
         payload={combinedMarketReviewPayload}
@@ -170,18 +170,15 @@ describe('MarketReviewReportView', () => {
       />,
     );
 
-    expect(screen.getByText('结构化大盘数据')).toBeInTheDocument();
-    expect(screen.getAllByText('上涨家数')).toHaveLength(2);
-    expect(screen.getAllByText('下跌家数')).toHaveLength(2);
-    expect(screen.getAllByText('涨停/跌停')).toHaveLength(2);
-    expect(screen.getAllByText('成交额')).toHaveLength(2);
-    expect(screen.getAllByText('指数')).toHaveLength(2);
-    expect(screen.getAllByText('最新')).toHaveLength(2);
-    expect(screen.getAllByText('涨跌幅')).toHaveLength(2);
-    expect(screen.getAllByText('高/低')).toHaveLength(2);
-    expect(screen.queryByText('Structured Market Data')).not.toBeInTheDocument();
-    expect(screen.queryByText('Advancers')).not.toBeInTheDocument();
-    expect(screen.queryByText('Index')).not.toBeInTheDocument();
+    expect(screen.getByText('Structured Market Data')).toBeInTheDocument();
+    expect(screen.getAllByText('Advancers')).toHaveLength(2);
+    expect(screen.getAllByText('Decliners')).toHaveLength(2);
+    expect(screen.getAllByText('Limit Up/Down')).toHaveLength(2);
+    expect(screen.getAllByText('Turnover')).toHaveLength(2);
+    expect(screen.getAllByText('Index')).toHaveLength(2);
+    expect(screen.getAllByText('Last')).toHaveLength(2);
+    expect(screen.getAllByText('Change')).toHaveLength(2);
+    expect(screen.getAllByText('High/Low')).toHaveLength(2);
   });
 
   it('shows "No data" when breadth is not available for a market review payload', () => {

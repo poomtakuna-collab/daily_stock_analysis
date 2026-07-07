@@ -6,6 +6,11 @@ import type {
 } from '../types/analysis';
 import { normalizeReportLanguage } from './reportLanguage';
 
+const displayLanguage = (language?: ReportLanguage | null): ReportLanguage => {
+  const normalized = normalizeReportLanguage(language);
+  return normalized === 'zh' ? 'en' : normalized;
+};
+
 const REQUEST_PHASE_LABELS: Record<ReportLanguage, Record<AnalysisPhase, string>> = {
   zh: {
     auto: '自动阶段',
@@ -83,7 +88,7 @@ export const getRequestedPhaseLabel = (
     return null;
   }
 
-  const reportLanguage = normalizeReportLanguage(language);
+  const reportLanguage = displayLanguage(language);
   const label = REQUEST_PHASE_LABELS[reportLanguage][phase];
   if (!label) {
     return null;
@@ -100,7 +105,7 @@ export const getMarketPhaseSummaryLabel = (
     return null;
   }
 
-  const reportLanguage = normalizeReportLanguage(language);
+  const reportLanguage = displayLanguage(language);
   const phaseLabel = MARKET_PHASE_LABELS[reportLanguage][summary.phase];
   if (!phaseLabel) {
     return null;
@@ -112,4 +117,4 @@ export const getMarketPhaseSummaryLabel = (
 };
 
 export const getPartialBarLabel = (language?: ReportLanguage | null): string =>
-  TEXT[normalizeReportLanguage(language)].partialBar;
+  TEXT[displayLanguage(language)].partialBar;

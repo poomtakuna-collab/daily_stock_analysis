@@ -273,20 +273,20 @@ describe('ReportSummary analysis context placement', () => {
     render(<ReportSummary data={result} />);
 
     await waitFor(() => {
-      expect(screen.getByText('暂无相关资讯')).toBeInTheDocument();
+      expect(screen.getByText('No related news')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('市场阶段: CN · 盘中')).toBeInTheDocument();
-    expect(screen.getByText('日线未完成')).toBeInTheDocument();
+    expect(screen.getByText('Market phase: CN · Intraday')).toBeInTheDocument();
+    expect(screen.getByText('Partial bar')).toBeInTheDocument();
     expect(screen.getAllByText('质量分 82/100 可用')[0]).toBeInTheDocument();
 
-    const strategy = screen.getByText('狙击点位');
-    const news = screen.getByText('相关资讯');
+    const strategy = screen.getByText('Action Levels');
+    const news = screen.getByText('Related News');
     const diagnostics = screen.getByTestId('run-diagnostics');
     const contextSummary = screen.getByTestId('analysis-context-summary');
     expect(contextSummary).not.toHaveAttribute('open');
     expect(diagnostics).not.toHaveAttribute('open');
-    const traceability = screen.getByText('数据追溯');
+    const traceability = screen.getByText('Data Traceability');
 
     expect(strategy.compareDocumentPosition(news) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(news.compareDocumentPosition(contextSummary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

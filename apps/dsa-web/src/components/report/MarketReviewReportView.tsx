@@ -369,9 +369,10 @@ export const MarketReviewReportView: React.FC<MarketReviewReportViewProps> = ({
   onOpenRunFlow,
 }) => {
   const normalizedReportLanguage = normalizeReportLanguage(reportLanguage);
+  const displayReportLanguage = normalizedReportLanguage === 'zh' ? 'en' : normalizedReportLanguage;
   const text = getReportText(normalizedReportLanguage);
-  const runFlowText = UI_TEXT[normalizedReportLanguage === 'ko' ? 'en' : normalizedReportLanguage];
-  const marketReviewText = MARKET_REVIEW_TEXT[normalizedReportLanguage];
+  const runFlowText = UI_TEXT[displayReportLanguage === 'ko' ? 'en' : displayReportLanguage];
+  const marketReviewText = MARKET_REVIEW_TEXT[displayReportLanguage];
   const [loadedMarkdown, setLoadedMarkdown] = useState<LoadedMarkdown | null>(null);
   const [loadError, setLoadError] = useState<LoadError | null>(null);
   const [copiedType, setCopiedType] = useState<CopyType | null>(null);

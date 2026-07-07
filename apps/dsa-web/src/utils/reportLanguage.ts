@@ -144,4 +144,7 @@ const REPORT_TEXT = {
   },
 } as const;
 
-export const getReportText = (language?: string | null) => REPORT_TEXT[normalizeReportLanguage(language)];
+export const getReportText = (language?: string | null) => {
+  const normalized = normalizeReportLanguage(language);
+  return REPORT_TEXT[normalized === 'zh' ? 'en' : normalized];
+};
