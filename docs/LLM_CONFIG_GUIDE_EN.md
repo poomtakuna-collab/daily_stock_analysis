@@ -49,6 +49,74 @@ AGENT_GENERATION_BACKEND=auto
 - The Web settings generation-backend quick check only reads saved `.env`, runtime defaults, and unsaved drafts. It does not write config, reload runtime, or send a real model request; `available` only means the current config can be attempted. JSON smoke test is a separate explicit button that sends one real generation-backend request with a server-owned fixed JSON prompt/schema to verify extractor behavior, JSON contract, timeout, output limits, and usage-unavailable semantics.
 - `GET /api/v1/system/config/generation-backends/status` only reads saved config. Unsaved drafts use `POST /api/v1/system/config/generation-backends/status/preview` or `POST /api/v1/system/config/generation-backends/smoke-test`; masked secrets preserve saved values. `health_status` and `last_error_code/message` describe only the current computation, not persisted historical health.
 
+## Runtime Profiles And Cost Controls
+
+`ANALYSIS_PROFILE` is optional. Leaving it blank preserves historical behavior. Sprint 1 only adds safe config parsing plus the regular stock-analysis output-token cap; it does not refactor the full analysis pipeline.
+
+| Profile | Intended use | Defaults |
+| --- | --- | --- |
+| `local_fast` | Local/small-model runs with less prompt context | `LLM_ANALYSIS_MODE=fast`, `LLM_MAX_OUTPUT_TOKENS=4096`, `LLM_MAX_NEWS_ITEMS=3`, history/portfolio/market context off |
+| `openai_deep` | Higher-quality paid model analysis | `LLM_ANALYSIS_MODE=deep`, `LLM_MAX_OUTPUT_TOKENS=12000`, `LLM_MAX_NEWS_ITEMS=20`, history/portfolio/market context on |
+| `no_ai` | Prepare for technical-only mode | `LLM_ANALYSIS_MODE=no_ai`, `LLM_MAX_OUTPUT_TOKENS=1024`, no news/history/portfolio/market context |
+
+Explicit `LLM_*` values override profile defaults:
+
+```env
+ANALYSIS_PROFILE=
+LLM_ANALYSIS_MODE=standard
+LLM_MAX_OUTPUT_TOKENS=8192
+LLM_MAX_NEWS_ITEMS=0
+LLM_INCLUDE_HISTORY=true
+LLM_INCLUDE_PORTFOLIO=true
+LLM_INCLUDE_MARKET_CONTEXT=true
+```
+
+Current wiring:
+
+- `LLM_MAX_OUTPUT_TOKENS` controls the regular stock-analysis LLM response cap. Market review and generic `generate_text()` calls keep their existing per-call limits in Sprint 1.
+- `LLM_INCLUDE_MARKET_CONTEXT=false` disables the existing daily market-context injection path for regular stock analysis.
+- `LLM_ANALYSIS_MODE`, `LLM_MAX_NEWS_ITEMS`, `LLM_INCLUDE_HISTORY`, and `LLM_INCLUDE_PORTFOLIO` are parsed and available on `Config`, but prompt pruning / technical-only report generation is reserved for the next sprint.
+- `ANALYSIS_PROFILE=no_ai` does not yet produce a full technical-only report. For a fetch-only run today, use the existing `python main.py --dry-run`.
+
+### Ollama Local Fast Example
+
+```env
+ANALYSIS_PROFILE=local_fast
+GENERATION_BACKEND=litellm
+OLLAMA_API_BASE=http://localhost:11434
+LITELLM_MODEL=ollama/qwen3:8b
+LLM_MAX_OUTPUT_TOKENS=4096
+LLM_INCLUDE_MARKET_CONTEXT=false
+```
+
+### OpenAI Deep Analysis Example
+
+```env
+ANALYSIS_PROFILE=openai_deep
+GENERATION_BACKEND=litellm
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxx
+OPENAI_BASE_URL=https://api.openai.com/v1
+LITELLM_MODEL=openai/gpt-5.5
+LLM_MAX_OUTPUT_TOKENS=12000
+LLM_MAX_NEWS_ITEMS=20
+LLM_INCLUDE_HISTORY=true
+LLM_INCLUDE_PORTFOLIO=true
+LLM_INCLUDE_MARKET_CONTEXT=true
+```
+
+### No-AI Technical-Only Placeholder
+
+```env
+ANALYSIS_PROFILE=no_ai
+LLM_ANALYSIS_MODE=no_ai
+LLM_MAX_NEWS_ITEMS=0
+LLM_INCLUDE_HISTORY=false
+LLM_INCLUDE_PORTFOLIO=false
+LLM_INCLUDE_MARKET_CONTEXT=false
+```
+
+This mode is intentionally a configuration placeholder in Sprint 1. The full technical-only report path should be implemented in the next sprint without overloading the existing LLM analyzer failure path.
+
 ### Local CLI Privacy And Boundaries
 
 - A local CLI backend is not an offline model. The service behind Codex / Claude Code / OpenCode may process stock symbols, news, position context, analysis prompts, and report drafts.

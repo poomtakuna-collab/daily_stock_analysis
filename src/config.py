@@ -104,6 +104,39 @@ SUPPORTED_LLM_CHANNEL_PROTOCOLS = ("openai", "anthropic", "gemini", "vertex_ai",
 _FALSEY_ENV_VALUES = {"0", "false", "no", "off"}
 PROMPT_CACHE_DIAGNOSTICS_LEVELS = {"off", "basic", "debug"}
 TICKFLOW_KLINE_ADJUST_VALUES = {"none", "forward", "backward", "forward_additive", "backward_additive"}
+SUPPORTED_ANALYSIS_PROFILES = {"local_fast", "openai_deep", "no_ai"}
+SUPPORTED_LLM_ANALYSIS_MODES = {"standard", "fast", "deep", "no_ai"}
+LLM_MAX_OUTPUT_TOKENS_DEFAULT = 8192
+LLM_MAX_OUTPUT_TOKENS_MIN = 512
+LLM_MAX_OUTPUT_TOKENS_MAX = 32768
+LLM_MAX_NEWS_ITEMS_DEFAULT = 0
+LLM_MAX_NEWS_ITEMS_MAX = 100
+ANALYSIS_PROFILE_PRESETS: Dict[str, Dict[str, Any]] = {
+    "local_fast": {
+        "llm_analysis_mode": "fast",
+        "llm_max_output_tokens": 4096,
+        "llm_max_news_items": 3,
+        "llm_include_history": False,
+        "llm_include_portfolio": False,
+        "llm_include_market_context": False,
+    },
+    "openai_deep": {
+        "llm_analysis_mode": "deep",
+        "llm_max_output_tokens": 12000,
+        "llm_max_news_items": 20,
+        "llm_include_history": True,
+        "llm_include_portfolio": True,
+        "llm_include_market_context": True,
+    },
+    "no_ai": {
+        "llm_analysis_mode": "no_ai",
+        "llm_max_output_tokens": 1024,
+        "llm_max_news_items": 0,
+        "llm_include_history": False,
+        "llm_include_portfolio": False,
+        "llm_include_market_context": False,
+    },
+}
 # Fallback defaults used when ANSPIRE_API_KEYS is reused as legacy OpenAI-compatible source.
 # These are compatibility examples; actual availability should be validated by Anspire console/model entitlement.
 ANSPIRE_LLM_BASE_URL_DEFAULT = "https://open-gateway.anspire.cn/v6"
@@ -257,6 +290,34 @@ def parse_env_int(
         )
         parsed = maximum
     return parsed
+
+
+def normalize_analysis_profile(value: Optional[str]) -> str:
+    """Normalize ANALYSIS_PROFILE without enabling a profile by default."""
+    normalized = (value or "").strip().lower()
+    if not normalized:
+        return ""
+    if normalized in SUPPORTED_ANALYSIS_PROFILES:
+        return normalized
+    logger.warning(
+        "Invalid ANALYSIS_PROFILE=%r; leaving runtime profile disabled",
+        value,
+    )
+    return ""
+
+
+def normalize_llm_analysis_mode(value: Optional[str], *, default: str = "standard") -> str:
+    """Normalize LLM_ANALYSIS_MODE with a backward-compatible fallback."""
+    fallback = default if default in SUPPORTED_LLM_ANALYSIS_MODES else "standard"
+    normalized = (value or fallback).strip().lower()
+    if normalized in SUPPORTED_LLM_ANALYSIS_MODES:
+        return normalized
+    logger.warning(
+        "Invalid LLM_ANALYSIS_MODE=%r; falling back to %s",
+        value,
+        fallback,
+    )
+    return fallback
 
 
 def parse_env_float(
@@ -750,6 +811,13 @@ class Config:
 
     # Unified temperature for all LLM calls (LLM_TEMPERATURE); legacy per-provider temps are fallback only
     llm_temperature: float = 0.7
+    analysis_profile: str = ""
+    llm_analysis_mode: str = "standard"
+    llm_max_output_tokens: int = LLM_MAX_OUTPUT_TOKENS_DEFAULT
+    llm_max_news_items: int = LLM_MAX_NEWS_ITEMS_DEFAULT
+    llm_include_history: bool = True
+    llm_include_portfolio: bool = True
+    llm_include_market_context: bool = True
 
     # Provider prompt-cache controls. These do not control provider implicit cache.
     llm_prompt_cache_telemetry_enabled: bool = True
@@ -1482,6 +1550,44 @@ class Config:
             maximum=MAX_LOCAL_CLI_BACKEND_MAX_CONCURRENCY,
         )
         opencode_cli_model = (os.getenv('OPENCODE_CLI_MODEL', '') or '').strip()
+        analysis_profile = normalize_analysis_profile(os.getenv('ANALYSIS_PROFILE'))
+        analysis_profile_preset = ANALYSIS_PROFILE_PRESETS.get(analysis_profile, {})
+        llm_analysis_mode = normalize_llm_analysis_mode(
+            os.getenv('LLM_ANALYSIS_MODE'),
+            default=str(analysis_profile_preset.get("llm_analysis_mode", "standard")),
+        )
+        llm_max_output_tokens = parse_env_int(
+            os.getenv('LLM_MAX_OUTPUT_TOKENS'),
+            int(analysis_profile_preset.get(
+                "llm_max_output_tokens",
+                LLM_MAX_OUTPUT_TOKENS_DEFAULT,
+            )),
+            field_name='LLM_MAX_OUTPUT_TOKENS',
+            minimum=LLM_MAX_OUTPUT_TOKENS_MIN,
+            maximum=LLM_MAX_OUTPUT_TOKENS_MAX,
+        )
+        llm_max_news_items = parse_env_int(
+            os.getenv('LLM_MAX_NEWS_ITEMS'),
+            int(analysis_profile_preset.get(
+                "llm_max_news_items",
+                LLM_MAX_NEWS_ITEMS_DEFAULT,
+            )),
+            field_name='LLM_MAX_NEWS_ITEMS',
+            minimum=0,
+            maximum=LLM_MAX_NEWS_ITEMS_MAX,
+        )
+        llm_include_history = parse_env_bool(
+            os.getenv('LLM_INCLUDE_HISTORY'),
+            default=bool(analysis_profile_preset.get("llm_include_history", True)),
+        )
+        llm_include_portfolio = parse_env_bool(
+            os.getenv('LLM_INCLUDE_PORTFOLIO'),
+            default=bool(analysis_profile_preset.get("llm_include_portfolio", True)),
+        )
+        llm_include_market_context = parse_env_bool(
+            os.getenv('LLM_INCLUDE_MARKET_CONTEXT'),
+            default=bool(analysis_profile_preset.get("llm_include_market_context", True)),
+        )
 
         agent_litellm_model = normalize_agent_litellm_model(
             os.getenv('AGENT_LITELLM_MODEL', ''),
@@ -1640,6 +1746,13 @@ class Config:
             litellm_model=litellm_model,
             litellm_fallback_models=litellm_fallback_models,
             llm_temperature=resolve_unified_llm_temperature(litellm_model),
+            analysis_profile=analysis_profile,
+            llm_analysis_mode=llm_analysis_mode,
+            llm_max_output_tokens=llm_max_output_tokens,
+            llm_max_news_items=llm_max_news_items,
+            llm_include_history=llm_include_history,
+            llm_include_portfolio=llm_include_portfolio,
+            llm_include_market_context=llm_include_market_context,
             litellm_config_path=litellm_config_path,
             llm_models_source=llm_models_source,
             llm_channels=llm_channels,
@@ -1947,7 +2060,10 @@ class Config:
             schedule_run_immediately=schedule_run_immediately,
             run_immediately=legacy_run_immediately,
             market_review_enabled=os.getenv('MARKET_REVIEW_ENABLED', 'true').lower() == 'true',
-            daily_market_context_enabled=os.getenv('DAILY_MARKET_CONTEXT_ENABLED', 'true').lower() == 'true',
+            daily_market_context_enabled=(
+                os.getenv('DAILY_MARKET_CONTEXT_ENABLED', 'true').lower() == 'true'
+                and llm_include_market_context
+            ),
             market_review_region=cls._parse_market_review_region(
                 os.getenv('MARKET_REVIEW_REGION', 'cn')
             ),

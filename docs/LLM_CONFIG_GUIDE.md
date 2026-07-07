@@ -56,6 +56,74 @@ AGENT_GENERATION_BACKEND=auto
 - Web 设置页的生成后端快速检查只读取已保存的 `.env`、运行时兜底值和未保存草稿；它不会写配置、重载运行时，也不会发起真实模型请求。`available` 只表示当前配置具备尝试运行的条件。JSON 冒烟测试是单独的显式操作，会使用服务端固定的 JSON 提示词和 schema 发起一次真实的生成后端请求，用于验证提取器、JSON 契约、超时、输出限制和 usage-unavailable 语义。
 - `GET /api/v1/system/config/generation-backends/status` 只读取已保存配置；未保存草稿需调用 `POST /api/v1/system/config/generation-backends/status/preview` 或 `POST /api/v1/system/config/generation-backends/smoke-test`。被遮罩的密钥字段会继续沿用已保存值。`health_status` 与 `last_error_code/message` 只代表本次计算结果，不是历史持久健康状态。
 
+## 运行档位与成本控制
+
+`ANALYSIS_PROFILE` 是可选配置。留空时保持历史默认行为。Sprint 1 只新增安全的配置解析和普通个股分析的输出 token 上限，不重构完整分析流水线。
+
+| Profile | 使用场景 | 默认值 |
+| --- | --- | --- |
+| `local_fast` | 本地/小模型快速分析，减少 prompt 上下文 | `LLM_ANALYSIS_MODE=fast`、`LLM_MAX_OUTPUT_TOKENS=4096`、`LLM_MAX_NEWS_ITEMS=3`，关闭历史/持仓/大盘上下文 |
+| `openai_deep` | 付费大模型深度分析 | `LLM_ANALYSIS_MODE=deep`、`LLM_MAX_OUTPUT_TOKENS=12000`、`LLM_MAX_NEWS_ITEMS=20`，开启历史/持仓/大盘上下文 |
+| `no_ai` | 为技术面-only 模式预留 | `LLM_ANALYSIS_MODE=no_ai`、`LLM_MAX_OUTPUT_TOKENS=1024`，关闭新闻/历史/持仓/大盘上下文 |
+
+显式 `LLM_*` 配置会覆盖 profile 默认值：
+
+```env
+ANALYSIS_PROFILE=
+LLM_ANALYSIS_MODE=standard
+LLM_MAX_OUTPUT_TOKENS=8192
+LLM_MAX_NEWS_ITEMS=0
+LLM_INCLUDE_HISTORY=true
+LLM_INCLUDE_PORTFOLIO=true
+LLM_INCLUDE_MARKET_CONTEXT=true
+```
+
+当前接线范围：
+
+- `LLM_MAX_OUTPUT_TOKENS` 控制普通个股分析 LLM 响应上限；大盘复盘和通用 `generate_text()` 在 Sprint 1 保持原有 per-call 限制。
+- `LLM_INCLUDE_MARKET_CONTEXT=false` 会关闭普通个股分析已有的大盘上下文注入路径。
+- `LLM_ANALYSIS_MODE`、`LLM_MAX_NEWS_ITEMS`、`LLM_INCLUDE_HISTORY`、`LLM_INCLUDE_PORTFOLIO` 已解析到 `Config`，但 prompt 裁剪 / 技术面-only 报告生成保留到下一轮实现。
+- `ANALYSIS_PROFILE=no_ai` 当前还不会生成完整技术面-only 报告；如需现有 fetch-only 流程，请使用 `python main.py --dry-run`。
+
+### Ollama 本地快速示例
+
+```env
+ANALYSIS_PROFILE=local_fast
+GENERATION_BACKEND=litellm
+OLLAMA_API_BASE=http://localhost:11434
+LITELLM_MODEL=ollama/qwen3:8b
+LLM_MAX_OUTPUT_TOKENS=4096
+LLM_INCLUDE_MARKET_CONTEXT=false
+```
+
+### OpenAI 深度分析示例
+
+```env
+ANALYSIS_PROFILE=openai_deep
+GENERATION_BACKEND=litellm
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxx
+OPENAI_BASE_URL=https://api.openai.com/v1
+LITELLM_MODEL=openai/gpt-5.5
+LLM_MAX_OUTPUT_TOKENS=12000
+LLM_MAX_NEWS_ITEMS=20
+LLM_INCLUDE_HISTORY=true
+LLM_INCLUDE_PORTFOLIO=true
+LLM_INCLUDE_MARKET_CONTEXT=true
+```
+
+### no-AI 技术面-only 预留示例
+
+```env
+ANALYSIS_PROFILE=no_ai
+LLM_ANALYSIS_MODE=no_ai
+LLM_MAX_NEWS_ITEMS=0
+LLM_INCLUDE_HISTORY=false
+LLM_INCLUDE_PORTFOLIO=false
+LLM_INCLUDE_MARKET_CONTEXT=false
+```
+
+该模式在 Sprint 1 中是配置预留；完整技术面-only 报告路径应在下一轮单独实现，避免把现有 LLM analyzer 的失败路径误用为正常分析模式。
+
 ### Local CLI 本地 backend 隐私与边界
 
 - 本地 CLI Backend 不等于离线模型；Codex / Claude Code / OpenCode 背后的服务可能处理股票代码、新闻、持仓上下文、分析 prompt、报告草稿等内容。

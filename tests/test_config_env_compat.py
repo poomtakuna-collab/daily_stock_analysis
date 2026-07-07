@@ -653,6 +653,118 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
             config = Config._load_from_env()
         self.assertFalse(config.daily_market_context_enabled)
 
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_runtime_profile_defaults_are_backward_compatible(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.analysis_profile, "")
+        self.assertEqual(config.llm_analysis_mode, "standard")
+        self.assertEqual(config.llm_max_output_tokens, 8192)
+        self.assertEqual(config.llm_max_news_items, 0)
+        self.assertTrue(config.llm_include_history)
+        self.assertTrue(config.llm_include_portfolio)
+        self.assertTrue(config.llm_include_market_context)
+        self.assertTrue(config.daily_market_context_enabled)
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_runtime_profile_local_fast_sets_cost_control_defaults(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        with patch.dict(os.environ, {"ANALYSIS_PROFILE": "local_fast"}, clear=True):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.analysis_profile, "local_fast")
+        self.assertEqual(config.llm_analysis_mode, "fast")
+        self.assertEqual(config.llm_max_output_tokens, 4096)
+        self.assertEqual(config.llm_max_news_items, 3)
+        self.assertFalse(config.llm_include_history)
+        self.assertFalse(config.llm_include_portfolio)
+        self.assertFalse(config.llm_include_market_context)
+        self.assertFalse(config.daily_market_context_enabled)
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_runtime_profile_env_values_override_profile_defaults(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "ANALYSIS_PROFILE": "local_fast",
+                "LLM_ANALYSIS_MODE": "deep",
+                "LLM_MAX_OUTPUT_TOKENS": "16000",
+                "LLM_MAX_NEWS_ITEMS": "12",
+                "LLM_INCLUDE_HISTORY": "true",
+                "LLM_INCLUDE_PORTFOLIO": "true",
+                "LLM_INCLUDE_MARKET_CONTEXT": "true",
+            },
+            clear=True,
+        ):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.analysis_profile, "local_fast")
+        self.assertEqual(config.llm_analysis_mode, "deep")
+        self.assertEqual(config.llm_max_output_tokens, 16000)
+        self.assertEqual(config.llm_max_news_items, 12)
+        self.assertTrue(config.llm_include_history)
+        self.assertTrue(config.llm_include_portfolio)
+        self.assertTrue(config.llm_include_market_context)
+        self.assertTrue(config.daily_market_context_enabled)
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_runtime_profile_no_ai_is_parsed_without_rewiring_pipeline(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        with patch.dict(os.environ, {"ANALYSIS_PROFILE": "no_ai"}, clear=True):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.analysis_profile, "no_ai")
+        self.assertEqual(config.llm_analysis_mode, "no_ai")
+        self.assertEqual(config.llm_max_output_tokens, 1024)
+        self.assertEqual(config.llm_max_news_items, 0)
+        self.assertFalse(config.llm_include_history)
+        self.assertFalse(config.llm_include_portfolio)
+        self.assertFalse(config.llm_include_market_context)
+        self.assertFalse(config.daily_market_context_enabled)
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_invalid_runtime_profile_and_token_bounds_fall_back_safely(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "ANALYSIS_PROFILE": "turbo",
+                "LLM_ANALYSIS_MODE": "expensive",
+                "LLM_MAX_OUTPUT_TOKENS": "999999",
+                "LLM_MAX_NEWS_ITEMS": "-1",
+            },
+            clear=True,
+        ):
+            config = Config._load_from_env()
+
+        self.assertEqual(config.analysis_profile, "")
+        self.assertEqual(config.llm_analysis_mode, "standard")
+        self.assertEqual(config.llm_max_output_tokens, 32768)
+        self.assertEqual(config.llm_max_news_items, 0)
+
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
     def test_runtime_mutable_keys_reload_from_updated_env_file_after_runtime_refresh(
         self,
