@@ -60,6 +60,14 @@ function resolveDisplayValue(item: SystemConfigItem, value: string): string {
   return value;
 }
 
+function formatConfigKeyTitle(key: string): string {
+  return key
+    .replace(/^settings\.[^.]+\./, '')
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 interface SettingsFieldProps {
   item: SystemConfigItem;
   value: string;
@@ -228,7 +236,7 @@ export const SettingsField: React.FC<SettingsFieldProps> = ({
   const fallbackTitle = schema?.title ?? item.key;
   const title = language === 'zh'
     ? getFieldTitleZh(localizationKey, getFieldTitleZh(item.key, fallbackTitle))
-    : fallbackTitle;
+    : formatConfigKeyTitle(localizationKey || item.key);
   const description = language === 'en'
     ? helpContent?.summary ?? schema?.description ?? ''
     : getFieldDescriptionZh(localizationKey, getFieldDescriptionZh(item.key, schema?.description));

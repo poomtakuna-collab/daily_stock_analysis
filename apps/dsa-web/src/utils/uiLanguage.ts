@@ -4,7 +4,7 @@ export const UI_LANGUAGE_STORAGE_KEY = 'dsa.uiLanguage';
 
 export function normalizeUiLanguage(value?: string | null): UiLanguage | null {
   if (value === 'zh' || value === 'en') {
-    return value;
+    return 'en';
   }
   return null;
 }
@@ -53,15 +53,12 @@ function getBrowserUiLanguage(navigatorLike?: Pick<Navigator, 'language' | 'lang
 
   for (const candidate of languageCandidates) {
     const normalized = candidate.toLowerCase();
-    if (normalized.startsWith('zh')) {
-      return 'zh';
-    }
     if (normalized.startsWith('en')) {
       return 'en';
     }
   }
 
-  return 'zh';
+  return 'en';
 }
 
 export function resolveInitialUiLanguage({
@@ -81,7 +78,7 @@ export function resolveInitialUiLanguage({
 
 export function getRuntimeInitialLanguage(): UiLanguage {
   if (typeof window === 'undefined') {
-    return 'zh';
+    return 'en';
   }
 
   return resolveInitialUiLanguage({

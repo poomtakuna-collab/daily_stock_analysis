@@ -23,6 +23,33 @@ def _create_full_static(repo_root):
     return static_dir
 
 
+def test_resolve_npm_path_prefers_cmd_on_windows(monkeypatch):
+    def fake_which(command):
+        return {
+            "npm.cmd": r"C:\Program Files\nodejs\npm.cmd",
+            "npm": r"C:\Program Files\nodejs\npm",
+        }.get(command)
+
+    monkeypatch.setattr(webui_frontend.os, "name", "nt")
+    monkeypatch.setattr(webui_frontend.shutil, "which", fake_which)
+
+    assert webui_frontend._resolve_npm_path() == r"C:\Program Files\nodejs\npm.cmd"
+
+
+def test_resolve_npm_path_uses_npm_on_non_windows(monkeypatch):
+    calls = []
+
+    def fake_which(command):
+        calls.append(command)
+        return "/usr/bin/npm" if command == "npm" else None
+
+    monkeypatch.setattr(webui_frontend.os, "name", "posix")
+    monkeypatch.setattr(webui_frontend.shutil, "which", fake_which)
+
+    assert webui_frontend._resolve_npm_path() == "/usr/bin/npm"
+    assert calls == ["npm"]
+
+
 def test_prepare_webui_frontend_assets_reuses_prebuilt_static_without_source(tmp_path, monkeypatch, caplog):
     repo_root = _prepare_fake_repo(tmp_path, monkeypatch)
     _create_full_static(repo_root)
@@ -40,6 +67,27 @@ def test_prepare_webui_frontend_assets_reuses_prebuilt_static_without_source(tmp
     assert "assets/ 目录不存在或无 CSS/JS 文件" not in caplog.text
 
 
+def test_prepare_webui_frontend_assets_uses_resolved_npm_for_build(tmp_path, monkeypatch):
+    repo_root = _prepare_fake_repo(tmp_path, monkeypatch)
+    frontend_dir = repo_root / "apps" / "dsa-web"
+    frontend_dir.mkdir(parents=True)
+    (frontend_dir / "package.json").write_text("{}", encoding="utf-8")
+
+    commands = []
+
+    def fake_run(command, cwd, check):
+        commands.append((command, cwd, check))
+
+    monkeypatch.delenv("WEBUI_AUTO_BUILD", raising=False)
+    monkeypatch.setenv("WEBUI_FORCE_BUILD", "true")
+    monkeypatch.setattr(webui_frontend, "_resolve_npm_path", lambda: r"C:\Program Files\nodejs\npm.cmd")
+    monkeypatch.setattr(webui_frontend.subprocess, "run", fake_run)
+
+    assert webui_frontend.prepare_webui_frontend_assets() is True
+    assert ([r"C:\Program Files\nodejs\npm.cmd", "run", "build"], frontend_dir, True) in commands
+    assert all(command[0] == r"C:\Program Files\nodejs\npm.cmd" for command, _, _ in commands)
+
+
 def test_prepare_webui_frontend_assets_fails_without_static_or_source(tmp_path, monkeypatch, caplog):
     _prepare_fake_repo(tmp_path, monkeypatch)
 
@@ -50,6 +98,15 @@ def test_prepare_webui_frontend_assets_fails_without_static_or_source(tmp_path, 
         assert webui_frontend.prepare_webui_frontend_assets() is False
 
     assert "未找到前端项目，无法自动构建" in caplog.text
+
+
+def test_run_frontend_commands_returns_false_on_oserror(tmp_path, monkeypatch):
+    def fake_run(command, cwd, check):
+        raise OSError(193, "%1 is not a valid Win32 application")
+
+    monkeypatch.setattr(webui_frontend.subprocess, "run", fake_run)
+
+    assert webui_frontend._run_frontend_commands([["npm", "run", "build"]], tmp_path) is False
 
 
 def test_prepare_webui_frontend_assets_warns_when_assets_missing(tmp_path, monkeypatch, caplog):

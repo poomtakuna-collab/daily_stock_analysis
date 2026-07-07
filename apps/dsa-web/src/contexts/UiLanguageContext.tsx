@@ -20,9 +20,10 @@ const UiLanguageContext = createContext<UiLanguageContextValue | null>(null);
 export const UiLanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<UiLanguage>(getRuntimeInitialLanguage);
 
-  const setLanguage = useCallback((nextLanguage: UiLanguage) => {
-    setLanguageState(nextLanguage);
-    persistUiLanguage(getUiLanguageStorage(), nextLanguage);
+  const setLanguage = useCallback((_nextLanguage: UiLanguage) => {
+    const displayLanguage: UiLanguage = 'en';
+    setLanguageState(displayLanguage);
+    persistUiLanguage(getUiLanguageStorage(), displayLanguage);
   }, []);
 
   useEffect(() => {

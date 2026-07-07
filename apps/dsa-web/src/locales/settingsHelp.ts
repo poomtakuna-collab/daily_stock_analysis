@@ -2332,11 +2332,9 @@ const settingsHelpEnUS: SettingsHelpMap = {
   },
 };
 
-function getPreferredHelpMap(locale?: string | null): SettingsHelpMap {
-  if (locale?.toLowerCase().startsWith('en')) {
-    return settingsHelpEnUS;
-  }
-  return settingsHelpZhCN;
+function getPreferredHelpMap(_locale?: string | null): SettingsHelpMap {
+  void settingsHelpZhCN;
+  return settingsHelpEnUS;
 }
 
 export function getSettingsHelpContent(
@@ -2348,14 +2346,14 @@ export function getSettingsHelpContent(
     return null;
   }
 
-  const localized = getPreferredHelpMap(locale)[helpKey] ?? settingsHelpZhCN[helpKey];
+  const localized = getPreferredHelpMap(locale)[helpKey] ?? settingsHelpEnUS[helpKey];
   if (localized) {
     return localized;
   }
 
   if (fallbackDescription) {
     return {
-      title: locale?.toLowerCase().startsWith('en') ? 'Configuration help' : '配置说明',
+      title: 'Configuration help',
       summary: fallbackDescription,
     };
   }

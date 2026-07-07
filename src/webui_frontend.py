@@ -104,6 +104,12 @@ def _needs_frontend_build(frontend_dir: Path, force_build: bool) -> tuple[bool, 
     return needs_build, artifact_index
 
 
+def _resolve_npm_path() -> str | None:
+    if os.name == "nt":
+        return shutil.which("npm.cmd") or shutil.which("npm")
+    return shutil.which("npm")
+
+
 def _run_frontend_commands(commands: Sequence[Sequence[str]], frontend_dir: Path) -> bool:
     try:
         for command in commands:
@@ -118,6 +124,9 @@ def _run_frontend_commands(commands: Sequence[Sequence[str]], frontend_dir: Path
             getattr(exc, "returncode", "N/A"),
             cmd_display,
         )
+        return False
+    except OSError as exc:
+        logger.error("前端命令执行失败: %s", exc)
         return False
 
 
@@ -206,7 +215,7 @@ def prepare_webui_frontend_assets() -> bool:
         logger.warning("可先手动检查前端目录或关闭 WEBUI_AUTO_BUILD")
         return False
 
-    npm_path = shutil.which("npm")
+    npm_path = _resolve_npm_path()
     if not npm_path:
         logger.warning("未检测到 npm，无法自动构建前端")
         logger.warning("请先手动构建前端静态资源: %s", _manual_build_command(frontend_dir))
