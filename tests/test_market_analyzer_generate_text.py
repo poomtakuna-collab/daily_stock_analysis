@@ -460,6 +460,69 @@ class TestAnalyzerGenerateText:
         assert callable(backend.generate.call_args.kwargs["response_validator"])
         assert backend.generate.call_args.kwargs["audit_context"] == {"call_type": "analysis"}
 
+    def test_call_litellm_impl_enables_json_mode_for_ollama_validation(self):
+        analyzer = self._make_analyzer()
+        analyzer._config_override.litellm_model = "ollama/qwen3:14b"
+        analyzer._config_override.gemini_api_keys = []
+        analyzer._config_override.llm_model_list = []
+
+        response = SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content='{"sentiment_score":70,"trend_prediction":"hold","operation_advice":"hold","analysis_summary":"ok"}'))],
+            usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1, total_tokens=2),
+        )
+
+        with patch.object(analyzer, "_dispatch_litellm_completion", return_value=response) as dispatch:
+            analyzer._call_litellm_impl(
+                "prompt",
+                {"max_tokens": 128, "temperature": 0.2},
+                system_prompt="system",
+                response_validator=lambda _text: None,
+            )
+
+        call_kwargs = dispatch.call_args.args[1]
+        assert call_kwargs["response_format"] == {"type": "json_object"}
+
+    def test_generate_text_does_not_enable_json_mode_for_ollama_market_review(self):
+        analyzer = self._make_analyzer()
+        analyzer._config_override.litellm_model = "ollama/qwen3:14b"
+        analyzer._config_override.gemini_api_keys = []
+        analyzer._config_override.llm_model_list = []
+
+        response = SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content="## Market Review\n\nMarkdown report"))],
+            usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1, total_tokens=2),
+        )
+
+        with patch.object(analyzer, "_dispatch_litellm_completion", return_value=response) as dispatch:
+            result = analyzer.generate_text("market review prompt", max_tokens=128, temperature=0.2)
+
+        assert result == "## Market Review\n\nMarkdown report"
+        call_kwargs = dispatch.call_args.args[1]
+        assert "response_format" not in call_kwargs
+
+    def test_call_litellm_impl_does_not_add_json_mode_for_openai_validation(self):
+        analyzer = self._make_analyzer()
+        analyzer._config_override.litellm_model = "openai/gpt-5.5"
+        analyzer._config_override.gemini_api_keys = []
+        analyzer._config_override.openai_api_keys = ["sk-openai-testkey-1234"]
+        analyzer._config_override.llm_model_list = []
+
+        response = SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content='{"sentiment_score":70,"trend_prediction":"hold","operation_advice":"hold","analysis_summary":"ok"}'))],
+            usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1, total_tokens=2),
+        )
+
+        with patch.object(analyzer, "_dispatch_litellm_completion", return_value=response) as dispatch:
+            analyzer._call_litellm_impl(
+                "prompt",
+                {"max_tokens": 128, "temperature": 0.2},
+                system_prompt="system",
+                response_validator=lambda _text: None,
+            )
+
+        call_kwargs = dispatch.call_args.args[1]
+        assert "response_format" not in call_kwargs
+
     def test_call_litellm_wraps_fallback_generation_error_with_primary_context(self):
         from src.llm.generation_backend import GenerationBackend, GenerationError, GenerationErrorCode
 

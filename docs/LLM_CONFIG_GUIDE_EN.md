@@ -117,6 +117,35 @@ LLM_INCLUDE_MARKET_CONTEXT=false
 
 This mode is intentionally a configuration placeholder in Sprint 1. The full technical-only report path should be implemented in the next sprint without overloading the existing LLM analyzer failure path.
 
+## Prompt Measurement Debug Logs
+
+Prompt measurement is disabled by default. Enable it only when you are inspecting prompt size or preparing a token-reduction sprint:
+
+```env
+LLM_PROMPT_MEASURE_ENABLED=true
+LLM_PROMPT_MEASURE_LOG_PARTS=true
+```
+
+What it logs for each regular stock analysis:
+
+- Stock name/code.
+- Estimated system prompt tokens.
+- Estimated user prompt tokens.
+- Estimated total prompt tokens.
+- Configured output token cap.
+- Optional best-effort section estimates for `technical`, `realtime`, `fundamentals`, `news_intelligence`, `history_context`, `portfolio`, and `schema_output_rules`.
+
+The estimator uses `tiktoken` when available. If model-specific tokenization is unavailable, it falls back to a documented `ceil(characters / 4)` estimate. Measurement logs never include API keys, environment values, or full prompts. When measurement is enabled, the existing full-prompt debug log is suppressed for regular stock analysis.
+
+Example:
+
+```text
+[LLM Prompt Measure] Apple(AAPL): system=4200 tokens, user=7800 tokens, total=12000 tokens, output_cap=8192, estimator=tiktoken:cl100k_base
+[LLM Prompt Measure Parts] Apple(AAPL): technical=2100, realtime=350, fundamentals=900, news_intelligence=1800, history_context=500, portfolio=0, schema_output_rules=1400 tokens
+```
+
+Section estimates are intentionally approximate because the current stock prompt is assembled as one markdown string. A future token-reduction sprint can make this exact by converting `_format_prompt()` to build named prompt parts before joining them.
+
 ### Local CLI Privacy And Boundaries
 
 - A local CLI backend is not an offline model. The service behind Codex / Claude Code / OpenCode may process stock symbols, news, position context, analysis prompts, and report drafts.

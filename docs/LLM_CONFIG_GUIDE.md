@@ -124,6 +124,35 @@ LLM_INCLUDE_MARKET_CONTEXT=false
 
 该模式在 Sprint 1 中是配置预留；完整技术面-only 报告路径应在下一轮单独实现，避免把现有 LLM analyzer 的失败路径误用为正常分析模式。
 
+## Prompt 测量调试日志
+
+Prompt 测量默认关闭。仅在排查 prompt 体积或准备 token 优化 sprint 时开启：
+
+```env
+LLM_PROMPT_MEASURE_ENABLED=true
+LLM_PROMPT_MEASURE_LOG_PARTS=true
+```
+
+每次普通个股分析会记录：
+
+- 股票名称/代码。
+- system prompt 估算 token。
+- user prompt 估算 token。
+- prompt 总估算 token。
+- 已配置的输出 token 上限。
+- 可选的粗粒度 section 估算：`technical`、`realtime`、`fundamentals`、`news_intelligence`、`history_context`、`portfolio`、`schema_output_rules`。
+
+估算器优先使用 `tiktoken`；如果无法使用模型专属 tokenizer，则回退为 `ceil(characters / 4)`。测量日志不会输出 API key、环境变量敏感值或完整 prompt；开启测量后，普通个股分析原有的完整 prompt debug 日志也会被抑制。
+
+示例：
+
+```text
+[LLM Prompt Measure] Apple(AAPL): system=4200 tokens, user=7800 tokens, total=12000 tokens, output_cap=8192, estimator=tiktoken:cl100k_base
+[LLM Prompt Measure Parts] Apple(AAPL): technical=2100, realtime=350, fundamentals=900, news_intelligence=1800, history_context=500, portfolio=0, schema_output_rules=1400 tokens
+```
+
+section 估算是有意保持的近似值，因为当前个股 prompt 是一个 markdown 字符串。后续 token 优化 sprint 若要精确测量，应先把 `_format_prompt()` 改为构建命名 prompt parts，再统一 join。
+
 ### Local CLI 本地 backend 隐私与边界
 
 - 本地 CLI Backend 不等于离线模型；Codex / Claude Code / OpenCode 背后的服务可能处理股票代码、新闻、持仓上下文、分析 prompt、报告草稿等内容。

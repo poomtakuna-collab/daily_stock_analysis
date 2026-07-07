@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [改进] 新增 LLM prompt 测量调试开关，可按个股分析记录 system/user prompt 估算 token、输出上限和粗粒度 section 体积分布。
 - [改进] 新增分析运行档位与 LLM 成本控制环境变量解析，补充 local_fast、openai_deep、no_ai 配置示例，并将普通个股分析输出 token 上限改为可配置。
 - [改进] GitHub Actions 每日分析工作流补齐 TickFlow 数据源环境变量映射，并收敛 README 数据源稳定性说明到完整指南。
 - [修复] WebUI 启动时显式 `--host` / `--port` 不再被 `.env` 中的 `WEBUI_HOST` / `WEBUI_PORT` 覆盖，未传 CLI 参数时统一使用解析后的运行时配置。

@@ -105,6 +105,17 @@ from src.market_phase_prompt import format_market_phase_prompt_section
 logger = logging.getLogger(__name__)
 
 
+_PROMPT_MEASURE_PARTS = (
+    "technical",
+    "realtime",
+    "fundamentals",
+    "news_intelligence",
+    "history_context",
+    "portfolio",
+    "schema_output_rules",
+)
+
+
 def _localized_text(language: Any, *, en: str, zh: str, ko: str) -> str:
     """Pick a deterministic fallback string for the report language (zh/en/ko)."""
     normalized = normalize_report_language(language)
@@ -113,6 +124,85 @@ def _localized_text(language: Any, *, en: str, zh: str, ko: str) -> str:
     if normalized == "ko":
         return ko
     return zh
+
+
+def _estimate_prompt_tokens(text: Optional[str], model: Optional[str] = None) -> Tuple[int, str]:
+    """Estimate prompt tokens without requiring a tokenizer at import time."""
+    prompt_text = text or ""
+    if not prompt_text:
+        return 0, "empty"
+
+    try:
+        import tiktoken  # type: ignore
+
+        model_name = (model or "").strip()
+        if "/" in model_name:
+            model_name = model_name.rsplit("/", 1)[-1]
+        try:
+            encoding = tiktoken.encoding_for_model(model_name) if model_name else tiktoken.get_encoding("cl100k_base")
+        except Exception:
+            encoding = tiktoken.get_encoding("cl100k_base")
+        return len(encoding.encode(prompt_text)), f"tiktoken:{getattr(encoding, 'name', 'unknown')}"
+    except Exception:
+        return int(math.ceil(len(prompt_text) / 4)), "chars/4"
+
+
+def _classify_prompt_measure_heading(heading: str) -> Optional[str]:
+    """Best-effort grouping for existing stock-analysis markdown headings."""
+    text = (heading or "").lower()
+    if any(marker in text for marker in ("实时行情", "realtime")):
+        return "realtime"
+    if any(marker in text for marker in ("财报", "分红", "主力资金", "法人", "fundamental", "capital flow")):
+        return "fundamentals"
+    if any(marker in text for marker in ("舆情", "新闻", "情报", "news", "intelligence")):
+        return "news_intelligence"
+    if any(marker in text for marker in ("大盘", "市场阶段", "上下文", "量价变化", "history", "context", "market phase")):
+        return "history_context"
+    if any(marker in text for marker in ("持仓", "portfolio", "position")):
+        return "portfolio"
+    if any(marker in text for marker in ("分析任务", "输出", "重点关注", "决策仪表盘要求", "schema", "output")):
+        return "schema_output_rules"
+    if any(marker in text for marker in ("技术", "均线", "趋势", "筹码", "quote", "technical", "chip")):
+        return "technical"
+    return None
+
+
+def _estimate_prompt_section_tokens(prompt: str, model: Optional[str] = None) -> Dict[str, int]:
+    """Estimate token sizes for coarse prompt sections using markdown headings."""
+    sections = {part: 0 for part in _PROMPT_MEASURE_PARTS}
+    matches = list(re.finditer(r"(?m)^(#{2,4})\s+(.+?)\s*$", prompt or ""))
+    if not matches:
+        return sections
+
+    for index, match in enumerate(matches):
+        part = _classify_prompt_measure_heading(match.group(2))
+        if part is None:
+            continue
+        start = match.start()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(prompt)
+        token_count, _method = _estimate_prompt_tokens(prompt[start:end], model=model)
+        sections[part] += token_count
+    return sections
+
+
+def _is_ollama_litellm_route(model: str, model_list: Optional[List[Dict[str, Any]]] = None) -> bool:
+    """Return whether a configured LiteLLM route targets Ollama."""
+    normalized_model = (model or "").strip().lower()
+    if normalized_model.startswith("ollama/"):
+        return True
+    for entry in model_list or []:
+        if not isinstance(entry, dict):
+            continue
+        route_name = str(entry.get("model_name") or "").strip()
+        if route_name and route_name != model:
+            continue
+        params = entry.get("litellm_params") or {}
+        if not isinstance(params, dict):
+            continue
+        wire_model = str(params.get("model") or "").strip().lower()
+        if wire_model.startswith("ollama/"):
+            return True
+    return False
 
 
 def _normalize_risk_warning_values(value: Any) -> List[str]:
@@ -3163,6 +3253,8 @@ class GeminiAnalyzer:
                     ],
                     "max_tokens": max_tokens,
                 }
+                if response_validator is not None and _is_ollama_litellm_route(model, recovery_model_list):
+                    call_kwargs["response_format"] = {"type": "json_object"}
                 if requested_timeout not in (None, ""):
                     call_kwargs["timeout"] = requested_timeout
                 if extra:
@@ -3342,6 +3434,52 @@ class GeminiAnalyzer:
         except Exception as exc:
             logger.error("[generate_text] LLM call failed: %s", exc)
             return None
+
+    def _log_prompt_measurement(
+        self,
+        *,
+        code: str,
+        name: str,
+        system_prompt: str,
+        user_prompt: str,
+        model_name: str,
+        output_token_cap: Any,
+        log_parts: bool,
+    ) -> None:
+        """Log estimated prompt size without logging prompt content."""
+        system_tokens, system_method = _estimate_prompt_tokens(system_prompt, model=model_name)
+        user_tokens, user_method = _estimate_prompt_tokens(user_prompt, model=model_name)
+        total_tokens = system_tokens + user_tokens
+        method = system_method if system_method == user_method else f"{system_method}/{user_method}"
+        logger.info(
+            "[LLM Prompt Measure] %s(%s): system=%s tokens, user=%s tokens, "
+            "total=%s tokens, output_cap=%s, estimator=%s",
+            name,
+            code,
+            system_tokens,
+            user_tokens,
+            total_tokens,
+            output_token_cap,
+            method,
+        )
+        if not log_parts:
+            return
+
+        part_tokens = _estimate_prompt_section_tokens(user_prompt, model=model_name)
+        logger.info(
+            "[LLM Prompt Measure Parts] %s(%s): technical=%s, realtime=%s, "
+            "fundamentals=%s, news_intelligence=%s, history_context=%s, "
+            "portfolio=%s, schema_output_rules=%s tokens",
+            name,
+            code,
+            part_tokens["technical"],
+            part_tokens["realtime"],
+            part_tokens["fundamentals"],
+            part_tokens["news_intelligence"],
+            part_tokens["history_context"],
+            part_tokens["portfolio"],
+            part_tokens["schema_output_rules"],
+        )
 
     def analyze(
         self, 
@@ -3527,7 +3665,10 @@ class GeminiAnalyzer:
             else:
                 prompt_preview = prompt[:500] + "..." if len(prompt) > 500 else prompt
             logger.info(f"[LLM Prompt 预览]\n{prompt_preview}")
-            if backend_id not in LOCAL_CLI_GENERATION_BACKEND_IDS:
+            if (
+                backend_id not in LOCAL_CLI_GENERATION_BACKEND_IDS
+                and not getattr(config, "llm_prompt_measure_enabled", False)
+            ):
                 logger.debug(f"=== 完整 Prompt ({len(prompt)}字符) ===\n{prompt}\n=== End Prompt ===")
 
             # 设置生成配置
@@ -3535,6 +3676,16 @@ class GeminiAnalyzer:
                 "temperature": config.llm_temperature,
                 "max_output_tokens": getattr(config, "llm_max_output_tokens", 8192),
             }
+            if getattr(config, "llm_prompt_measure_enabled", False):
+                self._log_prompt_measurement(
+                    code=code,
+                    name=name,
+                    system_prompt=system_prompt,
+                    user_prompt=prompt,
+                    model_name=model_name,
+                    output_token_cap=generation_config.get("max_output_tokens"),
+                    log_parts=getattr(config, "llm_prompt_measure_log_parts", False),
+                )
 
             logger.info(f"[LLM调用] 开始调用 {model_name}...")
             _emit_progress(68, f"{name}：LLM 已接收请求，等待响应")

@@ -670,6 +670,8 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
         self.assertTrue(config.llm_include_history)
         self.assertTrue(config.llm_include_portfolio)
         self.assertTrue(config.llm_include_market_context)
+        self.assertFalse(config.llm_prompt_measure_enabled)
+        self.assertFalse(config.llm_prompt_measure_log_parts)
         self.assertTrue(config.daily_market_context_enabled)
 
     @patch("src.config.setup_env")
@@ -764,6 +766,26 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
         self.assertEqual(config.llm_analysis_mode, "standard")
         self.assertEqual(config.llm_max_output_tokens, 32768)
         self.assertEqual(config.llm_max_news_items, 0)
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_prompt_measurement_flags_are_explicit_opt_in(
+        self,
+        _mock_parse_yaml,
+        _mock_setup_env,
+    ) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "LLM_PROMPT_MEASURE_ENABLED": "true",
+                "LLM_PROMPT_MEASURE_LOG_PARTS": "true",
+            },
+            clear=True,
+        ):
+            config = Config._load_from_env()
+
+        self.assertTrue(config.llm_prompt_measure_enabled)
+        self.assertTrue(config.llm_prompt_measure_log_parts)
 
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
     def test_runtime_mutable_keys_reload_from_updated_env_file_after_runtime_refresh(

@@ -16,12 +16,46 @@ from src.analyzer import (
     GeminiAnalyzer,
     _BULLISH_TREND_HINTS,
     _contains_trend_hint,
+    _estimate_prompt_section_tokens,
+    _estimate_prompt_tokens,
     _infer_trend_direction,
     _sanitize_trend_analysis_for_prompt,
 )
 
 
 class AnalyzerNewsPromptTestCase(unittest.TestCase):
+    def test_prompt_token_estimator_returns_safe_positive_estimate(self) -> None:
+        tokens, method = _estimate_prompt_tokens("hello world " * 20, model="openai/gpt-5.5")
+
+        self.assertGreater(tokens, 0)
+        self.assertTrue(method.startswith("tiktoken:") or method == "chars/4")
+
+    def test_prompt_section_estimator_groups_existing_markdown_headings(self) -> None:
+        prompt = """
+## 技术面数据
+MA5 > MA10
+### 实时行情增强数据
+volume_ratio=2
+### 财报与分红
+roe=10%
+## 舆情情报
+news item
+### 量价变化
+volume changed
+## 分析任务
+return JSON
+"""
+
+        parts = _estimate_prompt_section_tokens(prompt, model="openai/gpt-5.5")
+
+        self.assertGreater(parts["technical"], 0)
+        self.assertGreater(parts["realtime"], 0)
+        self.assertGreater(parts["fundamentals"], 0)
+        self.assertGreater(parts["news_intelligence"], 0)
+        self.assertGreater(parts["history_context"], 0)
+        self.assertGreater(parts["schema_output_rules"], 0)
+        self.assertEqual(parts["portfolio"], 0)
+
     def test_contains_trend_hint_treats_non_adjacent_negation_as_negated(self) -> None:
         self.assertFalse(_contains_trend_hint("尚未形成上升趋势，继续观察。", _BULLISH_TREND_HINTS))
         self.assertFalse(_contains_trend_hint("未形成上升趋势，继续观察。", _BULLISH_TREND_HINTS))

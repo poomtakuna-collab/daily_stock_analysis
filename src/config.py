@@ -818,6 +818,8 @@ class Config:
     llm_include_history: bool = True
     llm_include_portfolio: bool = True
     llm_include_market_context: bool = True
+    llm_prompt_measure_enabled: bool = False
+    llm_prompt_measure_log_parts: bool = False
 
     # Provider prompt-cache controls. These do not control provider implicit cache.
     llm_prompt_cache_telemetry_enabled: bool = True
@@ -1588,6 +1590,14 @@ class Config:
             os.getenv('LLM_INCLUDE_MARKET_CONTEXT'),
             default=bool(analysis_profile_preset.get("llm_include_market_context", True)),
         )
+        llm_prompt_measure_enabled = parse_env_bool(
+            os.getenv('LLM_PROMPT_MEASURE_ENABLED'),
+            default=False,
+        )
+        llm_prompt_measure_log_parts = parse_env_bool(
+            os.getenv('LLM_PROMPT_MEASURE_LOG_PARTS'),
+            default=False,
+        )
 
         agent_litellm_model = normalize_agent_litellm_model(
             os.getenv('AGENT_LITELLM_MODEL', ''),
@@ -1753,6 +1763,8 @@ class Config:
             llm_include_history=llm_include_history,
             llm_include_portfolio=llm_include_portfolio,
             llm_include_market_context=llm_include_market_context,
+            llm_prompt_measure_enabled=llm_prompt_measure_enabled,
+            llm_prompt_measure_log_parts=llm_prompt_measure_log_parts,
             litellm_config_path=litellm_config_path,
             llm_models_source=llm_models_source,
             llm_channels=llm_channels,
