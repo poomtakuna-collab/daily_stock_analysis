@@ -46,7 +46,7 @@ describe('Input', () => {
     const input = screen.getByLabelText('密码');
     expect(input).toHaveAttribute('type', 'password');
 
-    fireEvent.click(screen.getByRole('button', { name: '显示内容' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show content' }));
     expect(input).toHaveAttribute('type', 'text');
   });
 
@@ -65,7 +65,7 @@ describe('Input', () => {
 
     expect(screen.getByLabelText('API Key')).toHaveAttribute('type', 'text');
 
-    fireEvent.click(screen.getByRole('button', { name: '隐藏内容' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hide content' }));
     expect(onPasswordVisibleChange).toHaveBeenCalledWith(false);
   });
 
@@ -77,7 +77,7 @@ describe('Input', () => {
     expect(input).toHaveClass('input-appearance-login');
     expect(input).toHaveAttribute('type', 'password');
 
-    fireEvent.click(screen.getByRole('button', { name: '显示内容' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show content' }));
     expect(input).toHaveAttribute('type', 'text');
   });
 });

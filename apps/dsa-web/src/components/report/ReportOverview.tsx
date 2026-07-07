@@ -7,7 +7,7 @@ import type {
 import { Badge, Button, Card, ScoreGauge } from '../common';
 import { formatDateTime } from '../../utils/format';
 import { getMarketPhaseSummaryLabel, getPartialBarLabel } from '../../utils/marketPhase';
-import { getReportText, normalizeReportLanguage } from '../../utils/reportLanguage';
+import { getReportText, localizeKnownReportVocabulary, normalizeReportLanguage } from '../../utils/reportLanguage';
 import { useUiLanguage } from '../../contexts/UiLanguageContext';
 
 interface ReportOverviewProps {
@@ -296,7 +296,7 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
             <div className="home-divider border-t pt-5">
               <span className="label-uppercase">{text.keyInsights}</span>
               <p className="mt-2 max-w-[62ch] whitespace-pre-wrap text-left text-[15px] leading-7 text-foreground">
-                {summary.analysisSummary || text.noAnalysisSummary}
+                {localizeKnownReportVocabulary(summary.analysisSummary) || text.noAnalysisSummary}
               </p>
             </div>
           </Card>
@@ -319,7 +319,7 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
                 <div className="space-y-1.5">
                   <h4 className="home-insight-title text-[11px] font-medium uppercase tracking-[0.16em]">{text.actionAdvice}</h4>
                   <p className="home-insight-body text-sm leading-6">
-                    {summary.operationAdvice || text.noAdvice}
+                    {localizeKnownReportVocabulary(summary.operationAdvice) || text.noAdvice}
                   </p>
                 </div>
               </div>
@@ -342,7 +342,7 @@ export const ReportOverview: React.FC<ReportOverviewProps> = ({
                 <div className="space-y-1.5">
                   <h4 className="home-insight-title text-[11px] font-medium uppercase tracking-[0.16em]">{text.trendPrediction}</h4>
                   <p className="home-insight-body text-sm leading-6">
-                    {summary.trendPrediction || text.noPrediction}
+                    {localizeKnownReportVocabulary(summary.trendPrediction) || text.noPrediction}
                   </p>
                 </div>
               </div>

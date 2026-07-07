@@ -115,6 +115,45 @@ describe('ReportOverview', () => {
     expect(screen.queryByText('Partial bar')).not.toBeInTheDocument();
   });
 
+  it('localizes known short analysis vocabulary without rewriting longer text', () => {
+    render(
+      <ReportOverview
+        meta={baseMeta}
+        summary={{
+          analysisSummary: '\u5206\u6790\u5b8c\u6210',
+          operationAdvice: '\u6301\u6709',
+          trendPrediction: '\u9707\u8361',
+          sentimentScore: 52,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Analysis Complete')).toBeInTheDocument();
+    expect(screen.getByText('Hold')).toBeInTheDocument();
+    expect(screen.getByText('Sideways')).toBeInTheDocument();
+    expect(screen.queryByText('\u5206\u6790\u5b8c\u6210')).not.toBeInTheDocument();
+    expect(screen.queryByText('\u6301\u6709')).not.toBeInTheDocument();
+    expect(screen.queryByText('\u9707\u8361')).not.toBeInTheDocument();
+  });
+
+  it('keeps free-form analysis phrases unchanged', () => {
+    render(
+      <ReportOverview
+        meta={baseMeta}
+        summary={{
+          analysisSummary: '\u77ed\u7ebf\u9707\u8361\u504f\u5f3a',
+          operationAdvice: '\u7ee7\u7eed\u89c2\u5bdf\u4e70\u70b9',
+          trendPrediction: '\u9707\u8361\u540e\u4ecd\u9700\u786e\u8ba4',
+          sentimentScore: 52,
+        }}
+      />,
+    );
+
+    expect(screen.getByText('\u77ed\u7ebf\u9707\u8361\u504f\u5f3a')).toBeInTheDocument();
+    expect(screen.getByText('\u7ee7\u7eed\u89c2\u5bdf\u4e70\u70b9')).toBeInTheDocument();
+    expect(screen.getByText('\u9707\u8361\u540e\u4ecd\u9700\u786e\u8ba4')).toBeInTheDocument();
+  });
+
   it('renders related boards with leading and lagging markers', () => {
     render(
       <ReportOverview

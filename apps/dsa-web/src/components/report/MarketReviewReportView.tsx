@@ -10,7 +10,12 @@ import type {
   ReportLanguage,
 } from '../../types/analysis';
 import { markdownToPlainText } from '../../utils/markdown';
-import { getReportText, localizeKnownReportHeading, normalizeReportLanguage } from '../../utils/reportLanguage';
+import {
+  getReportText,
+  localizeKnownReportHeading,
+  localizeKnownReportVocabulary,
+  normalizeReportLanguage,
+} from '../../utils/reportLanguage';
 import { Card } from '../common';
 import { Tooltip } from '../common/Tooltip';
 import { ReportMarkdownBody } from './ReportMarkdownBody';
@@ -452,7 +457,7 @@ export const MarketReviewReportView: React.FC<MarketReviewReportViewProps> = ({
     {
       icon: FileText,
       label: marketReviewText.reviewSummary,
-      value: summary?.analysisSummary || marketReviewText.noReviewSummary,
+      value: localizeKnownReportVocabulary(summary?.analysisSummary) || marketReviewText.noReviewSummary,
     },
     {
       icon: Gauge,
@@ -464,12 +469,12 @@ export const MarketReviewReportView: React.FC<MarketReviewReportViewProps> = ({
     {
       icon: Layers,
       label: marketReviewText.rotationAndFunds,
-      value: summary?.operationAdvice || marketReviewText.noRotationView,
+      value: localizeKnownReportVocabulary(summary?.operationAdvice) || marketReviewText.noRotationView,
     },
     {
       icon: ShieldAlert,
       label: marketReviewText.riskAndWatch,
-      value: summary?.trendPrediction || marketReviewText.noRiskWatch,
+      value: localizeKnownReportVocabulary(summary?.trendPrediction) || marketReviewText.noRiskWatch,
     },
   ], [marketReviewText, summary, text.marketSentiment]);
 

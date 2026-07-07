@@ -1,4 +1,5 @@
 import type { DecisionAction } from '../types/analysis';
+import { localizeKnownReportVocabulary } from './reportLanguage';
 
 export type DecisionActionTone = 'success' | 'warning' | 'danger' | 'default';
 export type DecisionActionLabelMap = Record<DecisionAction, string>;
@@ -227,7 +228,7 @@ export const getDecisionActionLabel = (
   const actionLabels = resolveActionLabels(labels);
   if (action) return actionLabels[action];
   const explicitLabel = actionLabel?.trim();
-  if (explicitLabel) return explicitLabel;
+  if (explicitLabel) return localizeKnownReportVocabulary(explicitLabel);
   return getLegacyDecisionActionLabel(legacyAdvice, actionLabels) || emptyLabel;
 };
 

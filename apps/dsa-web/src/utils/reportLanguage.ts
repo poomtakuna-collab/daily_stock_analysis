@@ -189,3 +189,43 @@ export const localizeKnownReportMarkdownLabels = (markdown: string): string =>
         return localizedLabel === label ? line : `${prefix}${localizedLabel}${suffix.replace(/[：:]\s*$/, ': ')}`;
       },
     );
+
+const KNOWN_REPORT_VOCABULARY_LABELS: Record<string, string> = {
+  '\u5206\u6790\u5b8c\u6210': 'Analysis Complete',
+  '\u4e70\u5165': 'Buy',
+  '\u5f3a\u70c8\u4e70\u5165': 'Strong Buy',
+  '\u52a0\u4ed3': 'Add',
+  '\u6301\u6709': 'Hold',
+  '\u89c2\u671b': 'Watch',
+  '\u51cf\u4ed3': 'Reduce',
+  '\u5356\u51fa': 'Sell',
+  '\u5f3a\u70c8\u5356\u51fa': 'Strong Sell',
+  '\u4e2d\u6027': 'Neutral',
+  '\u9707\u8361': 'Sideways',
+  '\u770b\u6da8': 'Bullish',
+  '\u770b\u591a': 'Bullish',
+  '\u5f3a\u70c8\u770b\u591a': 'Strongly Bullish',
+  '\u770b\u8dcc': 'Bearish',
+  '\u770b\u7a7a': 'Bearish',
+  '\u5f3a\u70c8\u770b\u7a7a': 'Strongly Bearish',
+  '\u6570\u636e\u7f3a\u5931\uff0c\u65e0\u6cd5\u5224\u65ad': 'Insufficient Data',
+  '\u6570\u636e\u7f3a\u5931,\u65e0\u6cd5\u5224\u65ad': 'Insufficient Data',
+  '\u65e0\u6cd5\u5224\u65ad': 'Unknown',
+  '\u98ce\u9669\u504f\u9ad8': 'Elevated Risk',
+  '\u504f\u9632\u5b88': 'Defensive',
+};
+
+const normalizeKnownReportVocabulary = (value: string): string =>
+  value
+    .trim()
+    .replace(/^[\s"'“”‘’`*_]+|[\s"'“”‘’`*_.。；;!！]+$/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+
+export const localizeKnownReportVocabulary = (value?: string | null): string => {
+  const text = value?.trim();
+  if (!text) {
+    return value || '';
+  }
+  return KNOWN_REPORT_VOCABULARY_LABELS[normalizeKnownReportVocabulary(text)] ?? text;
+};

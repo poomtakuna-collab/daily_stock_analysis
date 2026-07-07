@@ -20,30 +20,37 @@ const englishLabels: DecisionActionLabelMap = {
 
 describe('decisionAction helpers', () => {
   it('uses structured action taxonomy before server label and legacy advice text', () => {
-    expect(getDecisionActionLabel('avoid', '回避', '买入', '建议')).toBe('回避');
+    expect(getDecisionActionLabel('avoid', '回避', '买入', '建议')).toBe('Avoid');
     expect(getDecisionActionLabel('sell', '买入', null, 'Advice', englishLabels)).toBe('Sell');
     expect(getDecisionActionTone('sell', '买入', null)).toBe('danger');
-    expect(getDecisionActionLabel(null, '买入', null, 'Advice', englishLabels)).toBe('买入');
+    expect(getDecisionActionLabel(null, '买入', null, 'Advice', englishLabels)).toBe('Buy');
   });
 
   it('falls back to the action taxonomy label when actionLabel is absent', () => {
-    expect(getDecisionActionLabel('add', null, '持有', '建议')).toBe('加仓');
+    expect(getDecisionActionLabel('add', null, '持有', '建议')).toBe('Add');
     expect(getDecisionActionLabel('watch', null, '持有', 'Advice', englishLabels)).toBe('Watch');
   });
 
+  it('localizes explicit short Chinese action labels for display', () => {
+    expect(getDecisionActionLabel(null, '持有', null, 'Advice', englishLabels)).toBe('Hold');
+    expect(getDecisionActionLabel(null, '卖出', null, 'Advice', englishLabels)).toBe('Sell');
+    expect(getDecisionActionLabel(null, '观望', null, 'Advice', englishLabels)).toBe('Watch');
+    expect(getDecisionActionLabel(null, '继续观察买点', null, 'Advice', englishLabels)).toBe('继续观察买点');
+  });
+
   it('keeps legacy fallback compatible with negated buy advice', () => {
-    expect(getLegacyDecisionActionLabel('不建议买入，等待确认')).toBe('回避');
-    expect(getDecisionActionLabel(null, null, '避免买入', '建议')).toBe('回避');
-    expect(getLegacyDecisionActionLabel('暂不买入，等待确认')).toBe('回避');
-    expect(getLegacyDecisionActionLabel('先不建仓，等待放量')).toBe('回避');
-    expect(getLegacyDecisionActionLabel('无需买入，等待确认')).toBe('回避');
-    expect(getLegacyDecisionActionLabel('无须建仓，继续观察')).toBe('回避');
-    expect(getLegacyDecisionActionLabel('无需布局，等待突破')).toBe('回避');
-    expect(getLegacyDecisionActionLabel('no buy until breakout')).toBe('回避');
-    expect(getLegacyDecisionActionLabel('no need to buy before confirmation')).toBe('回避');
-    expect(getLegacyDecisionActionLabel('cannot buy before confirmation')).toBe('回避');
-    expect(getLegacyDecisionActionLabel("can't buy before confirmation")).toBe('回避');
-    expect(getLegacyDecisionActionLabel('not a buy yet')).toBe('回避');
+    expect(getLegacyDecisionActionLabel('不建议买入，等待确认')).toBe('Avoid');
+    expect(getDecisionActionLabel(null, null, '避免买入', '建议')).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel('暂不买入，等待确认')).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel('先不建仓，等待放量')).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel('无需买入，等待确认')).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel('无须建仓，继续观察')).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel('无需布局，等待突破')).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel('no buy until breakout')).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel('no need to buy before confirmation')).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel('cannot buy before confirmation')).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel("can't buy before confirmation")).toBe('Avoid');
+    expect(getLegacyDecisionActionLabel('not a buy yet')).toBe('Avoid');
     expect(getLegacyDecisionActionLabel('not a buy yet', englishLabels)).toBe('Avoid');
     expect(getLegacyDecisionActionLabel('not to buy', englishLabels)).toBe('Avoid');
     expect(getLegacyDecisionActionLabel('avoid buying', englishLabels)).toBe('Avoid');
@@ -52,27 +59,27 @@ describe('decisionAction helpers', () => {
   });
 
   it('keeps legacy fallback compatible with negated sell and add advice', () => {
-    expect(getLegacyDecisionActionLabel('不建议卖出，继续观察')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('洗盘观察')).toBe('持有');
+    expect(getLegacyDecisionActionLabel('不建议卖出，继续观察')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('洗盘观察')).toBe('Hold');
     expect(getLegacyDecisionActionLabel('洗盘观察', englishLabels)).toBe('Hold');
-    expect(getLegacyDecisionActionLabel('无需减仓，维持仓位')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('无须减仓，维持仓位')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('不建议加仓，等待回踩')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('无须加仓，等待回踩')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('no add before confirmation')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('cannot add before confirmation')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('no need to accumulate here')).toBe('持有');
-    expect(getLegacyDecisionActionLabel("can't accumulate here")).toBe('持有');
-    expect(getLegacyDecisionActionLabel('no sell before earnings')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('cannot sell before earnings')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('no need to reduce exposure')).toBe('持有');
-    expect(getLegacyDecisionActionLabel("can't reduce exposure")).toBe('持有');
-    expect(getLegacyDecisionActionLabel('no trim while trend holds')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('cannot trim while trend holds')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('not a sell yet')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('not a trim yet')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('not to sell')).toBe('持有');
-    expect(getLegacyDecisionActionLabel('not to trim')).toBe('持有');
+    expect(getLegacyDecisionActionLabel('无需减仓，维持仓位')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('无须减仓，维持仓位')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('不建议加仓，等待回踩')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('无须加仓，等待回踩')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('no add before confirmation')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('cannot add before confirmation')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('no need to accumulate here')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel("can't accumulate here")).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('no sell before earnings')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('cannot sell before earnings')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('no need to reduce exposure')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel("can't reduce exposure")).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('no trim while trend holds')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('cannot trim while trend holds')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('not a sell yet')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('not a trim yet')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('not to sell')).toBe('Hold');
+    expect(getLegacyDecisionActionLabel('not to trim')).toBe('Hold');
     expect(getLegacyDecisionActionLabel('not a trim yet', englishLabels)).toBe('Hold');
     expect(getLegacyDecisionActionLabel('avoid selling into weakness', englishLabels)).toBe('Hold');
     expect(getLegacyDecisionActionLabel('avoid trimming before earnings', englishLabels)).toBe('Hold');

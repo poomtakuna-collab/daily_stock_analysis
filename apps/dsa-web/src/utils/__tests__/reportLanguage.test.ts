@@ -4,6 +4,7 @@ import {
   getReportText,
   localizeKnownReportHeading,
   localizeKnownReportMarkdownLabels,
+  localizeKnownReportVocabulary,
   normalizeReportLanguage,
 } from '../reportLanguage';
 import { getSentimentLabel } from '../../types/analysis';
@@ -54,6 +55,22 @@ describe('reportLanguage ko support', () => {
       '- Market Signal: \u91cf\u80fd\u653e\u5927',
       '## Recent Market Catalysts',
     ].join('\n'));
+  });
+
+  it('maps known short analysis vocabulary without rewriting longer text', () => {
+    expect(localizeKnownReportVocabulary('\u5206\u6790\u5b8c\u6210')).toBe('Analysis Complete');
+    expect(localizeKnownReportVocabulary('\u6301\u6709')).toBe('Hold');
+    expect(localizeKnownReportVocabulary('\u4e70\u5165')).toBe('Buy');
+    expect(localizeKnownReportVocabulary('\u5356\u51fa')).toBe('Sell');
+    expect(localizeKnownReportVocabulary('\u4e2d\u6027')).toBe('Neutral');
+    expect(localizeKnownReportVocabulary('\u9707\u8361')).toBe('Sideways');
+    expect(localizeKnownReportVocabulary('\u770b\u6da8')).toBe('Bullish');
+    expect(localizeKnownReportVocabulary('\u770b\u8dcc')).toBe('Bearish');
+    expect(localizeKnownReportVocabulary('\u6570\u636e\u7f3a\u5931\uff0c\u65e0\u6cd5\u5224\u65ad')).toBe('Insufficient Data');
+    expect(localizeKnownReportVocabulary('\u65e0\u6cd5\u5224\u65ad')).toBe('Unknown');
+    expect(localizeKnownReportVocabulary('\u98ce\u9669\u504f\u9ad8')).toBe('Elevated Risk');
+    expect(localizeKnownReportVocabulary('\u504f\u9632\u5b88')).toBe('Defensive');
+    expect(localizeKnownReportVocabulary('\u77ed\u7ebf\u9707\u8361\u504f\u5f3a')).toBe('\u77ed\u7ebf\u9707\u8361\u504f\u5f3a');
   });
 
   it('returns Korean sentiment labels by band', () => {

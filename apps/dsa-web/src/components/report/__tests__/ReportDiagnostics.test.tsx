@@ -95,7 +95,7 @@ describe('ReportDiagnostics', () => {
     render(<ReportDiagnostics recordId={1} onOpenRunFlow={onOpenRunFlow} />);
 
     fireEvent.click(await screen.findByText('运行状态'));
-    fireEvent.click(screen.getByRole('button', { name: '查看历史记录 1 运行流' }));
+    fireEvent.click(screen.getByRole('button', { name: 'View run flow for history record 1' }));
 
     expect(onOpenRunFlow).toHaveBeenCalledWith(1);
   });

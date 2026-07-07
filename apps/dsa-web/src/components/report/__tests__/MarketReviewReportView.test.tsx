@@ -127,6 +127,28 @@ describe('MarketReviewReportView', () => {
     expect(screen.queryByText('暂无摘要')).not.toBeInTheDocument();
   });
 
+  it('localizes known short summary vocabulary in insight cards', () => {
+    render(
+      <MarketReviewReportView
+        report={{
+          ...englishMarketReviewReport,
+          summary: {
+            analysisSummary: '\u5206\u6790\u5b8c\u6210',
+            operationAdvice: '\u98ce\u9669\u504f\u9ad8',
+            trendPrediction: '\u504f\u9632\u5b88',
+            sentimentScore: 50,
+          },
+        }}
+        content="# Market Review"
+        reportLanguage="zh"
+      />,
+    );
+
+    expect(screen.getByText('Analysis Complete')).toBeInTheDocument();
+    expect(screen.getByText('Elevated Risk')).toBeInTheDocument();
+    expect(screen.getByText('Defensive')).toBeInTheDocument();
+  });
+
   it('localizes known Chinese market review section titles in card rendering', () => {
     render(
       <MarketReviewReportView
