@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A股自选股智能分析系统 - 配置管理模块
+US Stock AI Research Platform - 配置管理模块
 ===================================
 
 职责：
@@ -956,7 +956,7 @@ class Config:
     
     # 邮件配置（只需邮箱和授权码，SMTP 自动识别）
     email_sender: Optional[str] = None  # 发件人邮箱
-    email_sender_name: str = "daily_stock_analysis股票分析助手"  # 发件人显示名称
+    email_sender_name: str = "US Stock AI Research Platform"  # 发件人显示名称
     email_password: Optional[str] = None  # 邮箱密码/授权码
     email_receivers: List[str] = field(default_factory=list)  # 收件人列表（留空则发给自己）
 
@@ -1093,7 +1093,7 @@ class Config:
     market_review_enabled: bool = True        # 是否启用大盘复盘
     daily_market_context_enabled: bool = True   # 是否将大盘环境摘要用于个股分析 Prompt 与保守护栏
     # 大盘复盘市场区域：cn(A股)、hk(港股)、us(美股)、jp(日股)、kr(韩股)、both(全部市场)
-    market_review_region: str = "cn"
+    market_review_region: str = "us"
     market_review_color_scheme: str = "green_up"
     # 交易日检查：默认启用，非交易日跳过执行；设为 false 或 --force-run 可强制执行（Issue #373）
     trading_day_check_enabled: bool = True
@@ -1142,7 +1142,7 @@ class Config:
     portfolio_fx_update_enabled: bool = True
 
     # Discord 机器人状态
-    discord_bot_status: str = "A股智能分析 | /help"
+    discord_bot_status: str = "US Stock Research | /help"
 
     # === 流控配置（防封禁关键参数）===
     # Akshare 请求间隔范围（秒）
@@ -1931,7 +1931,7 @@ class Config:
             telegram_chat_id=os.getenv('TELEGRAM_CHAT_ID'),
             telegram_message_thread_id=os.getenv('TELEGRAM_MESSAGE_THREAD_ID'),
             email_sender=os.getenv('EMAIL_SENDER'),
-            email_sender_name=os.getenv('EMAIL_SENDER_NAME', 'daily_stock_analysis股票分析助手'),
+            email_sender_name=os.getenv('EMAIL_SENDER_NAME', 'US Stock AI Research Platform'),
             email_password=os.getenv('EMAIL_PASSWORD'),
             email_receivers=[r.strip() for r in os.getenv('EMAIL_RECEIVERS', '').split(',') if r.strip()],
             stock_email_groups=cls._parse_stock_email_groups(),
@@ -2077,7 +2077,7 @@ class Config:
                 and llm_include_market_context
             ),
             market_review_region=cls._parse_market_review_region(
-                os.getenv('MARKET_REVIEW_REGION', 'cn')
+                os.getenv('MARKET_REVIEW_REGION', 'us')
             ),
             market_review_color_scheme=cls._parse_market_review_color_scheme(
                 os.getenv('MARKET_REVIEW_COLOR_SCHEME', 'green_up')
@@ -2108,7 +2108,7 @@ class Config:
             # Telegram
             telegram_webhook_secret=os.getenv('TELEGRAM_WEBHOOK_SECRET'),
             # Discord 机器人扩展配置
-            discord_bot_status=os.getenv('DISCORD_BOT_STATUS', 'A股智能分析 | /help'),
+            discord_bot_status=os.getenv('DISCORD_BOT_STATUS', 'US Stock Research | /help'),
             # 实时行情增强数据配置
             enable_realtime_quote=os.getenv('ENABLE_REALTIME_QUOTE', 'true').lower() == 'true',
             enable_realtime_technical_indicators=os.getenv(
@@ -2688,9 +2688,9 @@ class Config:
 
     @classmethod
     def _parse_market_review_region(cls, value: str) -> str:
-        """解析大盘复盘市场区域，非法值记录警告后回退为 cn"""
+        """解析大盘复盘市场区域，非法值记录警告后回退为 us"""
         import logging
-        v = (value or 'cn').strip().lower()
+        v = (value or 'us').strip().lower()
         supported_regions = ('cn', 'hk', 'us', 'jp', 'kr', 'both')
         ordered_regions = ('cn', 'hk', 'us', 'jp', 'kr')
 
@@ -2708,9 +2708,9 @@ class Config:
                 return ','.join(normalized)
 
         logging.getLogger(__name__).warning(
-            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'cn'（合法值：cn / hk / us / jp / kr / both；支持逗号分隔有效值）"
+            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'us'（合法值：cn / hk / us / jp / kr / both；支持逗号分隔有效值）"
         )
-        return 'cn'
+        return 'us'
 
     @classmethod
     def _parse_market_review_color_scheme(cls, value: str) -> str:
@@ -2880,7 +2880,7 @@ class Config:
         if not self.stock_list:
             issues.append(ConfigIssue(
                 severity="error",
-                message="未配置 STOCK_LIST。请设置至少一个股票代码，例如：600519,hk00700,AAPL。",
+                message="未配置 STOCK_LIST。请设置至少一个股票代码，例如：MSFT,AAPL,NVDA。",
                 field="STOCK_LIST",
             ))
         elif self.stock_email_groups:

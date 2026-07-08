@@ -1,6 +1,6 @@
 <div align="center">
 
-# AI Stock Analysis System
+# US Stock AI Research Platform
 
 [![GitHub stars](https://img.shields.io/github/stars/ZhuLinsen/daily_stock_analysis?style=social)](https://github.com/ZhuLinsen/daily_stock_analysis/stargazers)
 [![CI](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/ZhuLinsen/daily_stock_analysis/actions/workflows/ci.yml)
@@ -13,9 +13,9 @@
   <img src="https://trendshift.io/api/badge/trendshift/repositories/18527/daily?language=Python" alt="#1 Python Repository Of The Day | Trendshift" width="250" height="55"/>&nbsp;<a href="https://hellogithub.com/repository/ZhuLinsen/daily_stock_analysis" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=6daa16e405ce46ed97b4a57706aeb29f&claim_uid=pfiJMqhR9uvDGlT&theme=neutral" alt="Featured｜HelloGitHub" width="230" /></a>
 </p>
 
-**AI-powered stock analysis system for A-shares / Hong Kong / US / Japanese / Korean / Taiwan stocks**
+**AI-powered US stock research platform, defaulting to major US tickers while keeping A-share, Hong Kong, Japanese, Korean, and Taiwan market support intact**
 
-Analyze your watchlist daily -> generate a decision dashboard -> push to Telegram / Discord / Slack / Email / WeChat Work / Feishu.
+Analyze your US stock watchlist daily -> generate a decision dashboard -> push to Telegram / Discord / Slack / Email / WeChat Work / Feishu.
 
 [**Product Preview**](#-product-preview) · [**Key Features**](#-key-features) · [**Quick Start**](#-quick-start) · [**Sample Output**](#-sample-output) · [**Documentation Index**](./INDEX_EN.md) · [**Full Guide**](./full-guide_EN.md)
 
@@ -43,7 +43,7 @@ English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 | Capability | Coverage |
 |------------|----------|
 | AI decision reports | Core conclusion, score, trend, entry/exit levels, risk alerts, catalysts, and action checklist |
-| Multi-market data | Covers A-shares, Hong Kong, US, Japanese, Korean, Taiwan stocks, and ETFs, with quotes, K-lines, technical indicators, news, announcements, fundamentals, and report context. Data-source coverage and market boundaries are documented in [market boundaries](market-support.md) |
+| US-first multi-market data | Defaults to US stock research and still covers A-shares, Hong Kong, Japanese, Korean, Taiwan stocks, and ETFs, with quotes, K-lines, technical indicators, news, announcements, fundamentals, and report context. Data-source coverage and market boundaries are documented in [market boundaries](market-support.md) |
 | Web / desktop workspace | Manual analysis, task progress, history, full Markdown reports, backtest, portfolio, settings, and light/dark themes |
 | Agent strategy chat | Multi-turn Q&A with 15 built-in strategies across Web/Bot/API |
 | Smart import & autocomplete | Image, CSV/Excel, clipboard import; code/name/pinyin/alias autocomplete |
@@ -108,7 +108,7 @@ More channels, signatures, email groups, and Markdown-to-image settings are in [
 
 | Secret Name | Description | Required |
 |-------------|-------------|:--------:|
-| `STOCK_LIST` | Watchlist codes, such as `600519,hk00700,AAPL,7203.T,005930.KS,2330.TW` | ✅ |
+| `STOCK_LIST` | Watchlist codes, such as `MSFT,AAPL,NVDA,hk00700,7203.T,005930.KS,2330.TW` | ✅ |
 
 **News sources (recommended)**
 
@@ -116,7 +116,7 @@ News search strongly improves sentiment, announcements, events, and catalyst qua
 
 | Secret Name | Description | Required |
 |-------------|-------------|:--------:|
-| `ANSPIRE_API_KEYS` | [Anspire AI Search](https://aisearch.anspire.cn/), optimized for Chinese content and A-share analysis; the same key can also be used for Anspire LLM fallback examples | **Recommended** |
+| `ANSPIRE_API_KEYS` | [Anspire AI Search](https://aisearch.anspire.cn/), useful for financial news and multi-market research; the same key can also be used for Anspire LLM fallback examples | **Recommended** |
 | `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis), search-engine results for realtime financial news | **Recommended** |
 | `TAVILY_API_KEYS` | [Tavily](https://tavily.com/), general news search API | Optional |
 | `BOCHA_API_KEYS` | [Bocha](https://open.bocha.cn/), Chinese search with AI summaries | Optional |
@@ -171,7 +171,7 @@ Common commands:
 ```bash
 python main.py --debug
 python main.py --dry-run
-python main.py --stocks 600519,hk00700,AAPL,2330.TW
+python main.py --stocks MSFT,AAPL,NVDA,GOOGL
 python main.py --market-review
 python main.py --schedule
 python main.py --serve-only

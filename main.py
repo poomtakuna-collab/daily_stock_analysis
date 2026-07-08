@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ===================================
-A股自选股智能分析系统 - 主调度程序
+US Stock AI Research Platform - 主调度程序
 ===================================
 
 职责：
@@ -265,14 +265,14 @@ def _reload_env_file_values_preserving_overrides() -> None:
 def parse_arguments() -> argparse.Namespace:
     """解析命令行参数"""
     parser = argparse.ArgumentParser(
-        description='A股自选股智能分析系统',
+        description='US Stock AI Research Platform',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 示例:
   python main.py                    # 正常运行
   python main.py --debug            # 调试模式
   python main.py --dry-run          # 仅获取数据，不进行 AI 分析
-  python main.py --stocks 600519,000001  # 指定分析特定股票
+  python main.py --stocks MSFT,AAPL,NVDA  # 指定分析特定股票
   python main.py --no-notify        # 不发送推送通知
   python main.py --check-notify     # 检查通知配置，不发送通知
   python main.py --single-notify    # 启用单股推送模式（每分析完一只立即推送）
@@ -461,7 +461,7 @@ def _compute_trading_day_filter(
 
     if config.market_review_enabled and not getattr(args, 'no_market_review', False):
         effective_region = compute_effective_region(
-            getattr(config, 'market_review_region', 'cn') or 'cn', open_markets
+            getattr(config, 'market_review_region', 'us') or 'us', open_markets
         )
     else:
         effective_region = None
@@ -603,8 +603,8 @@ def _resolve_daily_market_context_target_date(
     region: str,
     current_time: datetime,
 ) -> date:
-    normalized_region = str(region or "cn").strip().lower()
-    market = normalized_region if normalized_region in {"cn", "hk", "us", "jp", "kr"} else "cn"
+    normalized_region = str(region or "us").strip().lower()
+    market = normalized_region if normalized_region in {"cn", "hk", "us", "jp", "kr"} else "us"
 
     from src.core.trading_calendar import get_effective_trading_date
 
@@ -715,7 +715,7 @@ def run_full_analysis(
         market_review_region = (
             effective_region
             if effective_region is not None
-            else (getattr(config, 'market_review_region', 'cn') or 'cn')
+            else (getattr(config, 'market_review_region', 'us') or 'us')
         )
         should_run_market_review = (
             config.market_review_enabled
@@ -1267,7 +1267,7 @@ def main() -> int:
         return 1
 
     logger.info("=" * 60)
-    logger.info("A股自选股智能分析系统 启动")
+    logger.info("US Stock AI Research Platform 启动")
     logger.info(f"运行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 60)
 
@@ -1416,7 +1416,7 @@ def main() -> int:
                 from src.core.trading_calendar import get_open_markets_today, compute_effective_region as _compute_region
                 open_markets = get_open_markets_today()
                 effective_region = _compute_region(
-                    getattr(config, 'market_review_region', 'cn') or 'cn', open_markets
+                    getattr(config, 'market_review_region', 'us') or 'us', open_markets
                 )
                 if effective_region == '':
                     logger.info("今日大盘复盘相关市场均为非交易日，跳过执行。可使用 --force-run 强制执行。")

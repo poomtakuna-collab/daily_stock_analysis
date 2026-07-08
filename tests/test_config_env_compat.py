@@ -87,7 +87,7 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
-    def test_market_review_region_falls_back_to_cn_when_no_supported_tokens(
+    def test_market_review_region_falls_back_to_us_when_no_supported_tokens(
         self, _mock_parse_litellm_yaml, _mock_setup_env
     ):
         with patch.dict(
@@ -100,7 +100,7 @@ class ConfigEnvCompatibilityTestCase(unittest.TestCase):
         ):
             config = Config._load_from_env()
 
-        self.assertEqual(config.market_review_region, "cn")
+        self.assertEqual(config.market_review_region, "us")
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])

@@ -312,9 +312,9 @@ def create_app(static_dir: Optional[Path] = None) -> FastAPI:
     
     # 创建 FastAPI 实例
     app = FastAPI(
-        title="Daily Stock Analysis API",
+        title="US Stock AI Research Platform API",
         description=(
-            "A股/港股/美股自选股智能分析系统 API\n\n"
+            "US Stock AI Research Platform API（默认面向美股研究，并保留 A股/港股/日股/韩股/台股等多市场能力）\n\n"
             "## 功能模块\n"
             "- 股票分析：触发 AI 智能分析\n"
             "- 历史记录：查询历史分析报告\n"

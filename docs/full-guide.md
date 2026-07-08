@@ -1,6 +1,6 @@
 # 📖 完整配置与部署指南
 
-本文档包含 A股智能分析系统的完整配置说明，适合需要高级功能或特殊部署方式的用户。
+本文档包含 US Stock AI Research Platform 的完整配置说明，适合需要高级功能或特殊部署方式的用户。平台默认面向美股研究，同时保留 A股、港股、日股、韩股、台股等多市场能力。
 
 > 💡 快速上手请参考 [README.md](../README.md)，本文档为进阶配置。
 
@@ -92,7 +92,7 @@ daily_stock_analysis/
 | `EMAIL_SENDER` | 发件人邮箱（如 `xxx@qq.com`） | 可选 |
 | `EMAIL_PASSWORD` | 邮箱授权码（非登录密码） | 可选 |
 | `EMAIL_RECEIVERS` | 收件人邮箱（多个用逗号分隔，留空则发给自己） | 可选 |
-| `EMAIL_SENDER_NAME` | 发件人显示名称（默认：daily_stock_analysis股票分析助手） | 可选 |
+| `EMAIL_SENDER_NAME` | 发件人显示名称（默认：US Stock AI Research Platform） | 可选 |
 | `PUSHPLUS_TOKEN` | PushPlus Token（[获取地址](https://www.pushplus.plus)，国内推送服务） | 可选 |
 | `SERVERCHAN3_SENDKEY` | Server酱³ Sendkey（[获取地址](https://sc3.ft07.com/)，手机APP推送服务） | 可选 |
 | `ASTRBOT_URL` | AstrBot Webhook URL | 可选 |
@@ -153,7 +153,7 @@ daily_stock_analysis/
 
 | Secret 名称 | 说明 | 必填 |
 |------------|------|:----:|
-| `STOCK_LIST` | 自选股代码，如 `600519,300750,002594,7203.T,005930.KS`；推荐使用英文逗号，中文逗号、顿号、分号、空格和换行会被识别并规范为英文逗号 | ✅ |
+| `STOCK_LIST` | 自选股代码，如 `MSFT,AAPL,NVDA,GOOGL,AMZN`；推荐使用英文逗号，中文逗号、顿号、分号、空格和换行会被识别并规范为英文逗号 | ✅ |
 | `ANSPIRE_API_KEYS` | [Anspire AI Search](https://aisearch.anspire.cn/) 针对中文内容特别优化；同一 Key 可用于搜索与 Anspire 大模型网关的兜底示例（是否可用以控制台与账号权限为准） | 推荐 |
 | `SERPAPI_API_KEYS` | [SerpAPI](https://serpapi.com/baidu-search-api?utm_source=github_daily_stock_analysis) 搜索引擎结果补强，适合实时金融新闻 | 推荐 |
 | `TAVILY_API_KEYS` | [Tavily](https://tavily.com/) 搜索 API（新闻搜索） | 可选 |
@@ -456,7 +456,7 @@ daily_stock_analysis/
 | `MAX_WORKERS` | 并发线程数 | `3` |
 | `MARKET_REVIEW_ENABLED` | 启用大盘复盘 | `true` |
 | `DAILY_MARKET_CONTEXT_ENABLED` | 将当日大盘环境摘要注入个股分析 Prompt，并在高风险/退潮环境下软化激进买入建议；默认开启，设为 `false` 后仍可运行大盘复盘 | `true` |
-| `MARKET_REVIEW_REGION` | 大盘复盘市场区域：cn(A股)、hk(港股)、us(美股)、jp(日股)、kr(韩股)、both(五市场)，us/jp/kr 适合仅关注单区域用户 | `cn` |
+| `MARKET_REVIEW_REGION` | 大盘复盘市场区域：us(美股)、cn(A股)、hk(港股)、jp(日股)、kr(韩股)、both(五市场)，默认面向美股；仍可显式配置其他市场或逗号分隔子集 | `us` |
 | `MARKET_REVIEW_COLOR_SCHEME` | 大盘复盘指数涨跌颜色：`green_up`=绿涨红跌（默认），`red_up`=红涨绿跌 | `green_up` |
 | `TRADING_DAY_CHECK_ENABLED` | 交易日检查：默认 `true`，非交易日跳过执行；设为 `false` 或使用 `--force-run` 可强制执行（Issue #373） | `true` |
 | `SCHEDULE_ENABLED` | 启用定时任务 | `false` |
@@ -675,7 +675,7 @@ python scripts/check_env.py --config
 python main.py                        # 完整分析（个股 + 大盘复盘）
 python main.py --market-review        # 仅大盘复盘
 python main.py --no-market-review     # 仅个股分析
-python main.py --stocks 600519,300750 # 指定股票
+python main.py --stocks MSFT,AAPL,NVDA # 指定股票
 python main.py --dry-run              # 仅获取数据，不 AI 分析
 python main.py --no-notify            # 不发送推送
 python main.py --schedule             # 定时任务模式
@@ -1034,10 +1034,10 @@ FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/your_hook_token
 > GitHub Actions 限制：截至 2026-03-29，仓库自带 `00-daily-analysis.yml` 不会自动导入任意编号的 `STOCK_GROUP_N` / `EMAIL_GROUP_N`。因此如果你只在仓库 Secrets / Variables 中新增这些变量，而没有修改 workflow 显式映射，它们不会进入运行进程，看起来就像“分组配置不生效”。
 
 ```bash
-STOCK_LIST=600519,300750,002594,AAPL
-STOCK_GROUP_1=600519,300750
+STOCK_LIST=MSFT,AAPL,NVDA,GOOGL
+STOCK_GROUP_1=MSFT,AAPL
 EMAIL_GROUP_1=user1@example.com
-STOCK_GROUP_2=002594,AAPL
+STOCK_GROUP_2=NVDA,GOOGL
 EMAIL_GROUP_2=user2@example.com
 ```
 
@@ -1257,7 +1257,7 @@ PUSHOVER_API_TOKEN=your_api_token
 使用 `hk` 前缀指定港股代码：
 
 ```bash
-STOCK_LIST=600519,hk00700,hk01810
+STOCK_LIST=MSFT,hk00700,hk01810
 ```
 
 港股日线会跳过 efinance、pytdx、baostock 等不支持港股日线的数据源，避免把港股代码错配到非港股市场；默认改由 AkShare/Tushare/YFinance/Longbridge 等港股路径继续兜底。
@@ -1594,15 +1594,15 @@ FastAPI 提供 RESTful API 服务，支持配置管理和触发分析。
 # 健康检查
 curl http://127.0.0.1:8000/api/health
 
-# 触发分析（A股）
+# 触发分析（美股）
 curl -X POST http://127.0.0.1:8000/api/v1/analysis/analyze \
   -H 'Content-Type: application/json' \
-  -d '{"stock_code": "600519"}'
+  -d '{"stock_code": "MSFT"}'
 
 # 透传策略（可选）
 curl -X POST http://127.0.0.1:8000/api/v1/analysis/analyze \
   -H 'Content-Type: application/json' \
-  -d '{"stock_code": "600519", "skills": ["bull_trend", "growth_quality"]}'
+  -d '{"stock_code": "MSFT", "skills": ["bull_trend", "growth_quality"]}'
 
 # 查询任务状态
 curl http://127.0.0.1:8000/api/v1/analysis/status/<task_id>
@@ -1621,7 +1621,7 @@ curl -X POST http://127.0.0.1:8000/api/v1/backtest/run \
 # 触发回测（指定股票）
 curl -X POST http://127.0.0.1:8000/api/v1/backtest/run \
   -H 'Content-Type: application/json' \
-  -d '{"code": "600519", "force": false}'
+  -d '{"code": "MSFT", "force": false}'
 
 # 触发回测（按分析日期范围）
 curl -X POST http://127.0.0.1:8000/api/v1/backtest/run \
@@ -1631,13 +1631,13 @@ curl -X POST http://127.0.0.1:8000/api/v1/backtest/run \
 # 触发回测（指定股票 + 日期范围 + 强制重跑）
 curl -X POST http://127.0.0.1:8000/api/v1/backtest/run \
   -H 'Content-Type: application/json' \
-  -d '{"code": "600519", "force": true, "analysis_date_from": "2026-05-01", "analysis_date_to": "2026-05-31"}'
+  -d '{"code": "MSFT", "force": true, "analysis_date_from": "2026-05-01", "analysis_date_to": "2026-05-31"}'
 
 # 查询整体回测表现
 curl http://127.0.0.1:8000/api/v1/backtest/performance
 
 # 查询单股回测表现
-curl http://127.0.0.1:8000/api/v1/backtest/performance/600519
+curl http://127.0.0.1:8000/api/v1/backtest/performance/MSFT
 
 # 分页查询回测结果
 curl "http://127.0.0.1:8000/api/v1/backtest/results?page=1&limit=20"
@@ -1727,7 +1727,7 @@ A: 检查是否启用了 Actions，以及 cron 表达式是否正确（注意是
 ```env
 AGENT_EVENT_MONITOR_ENABLED=true
 AGENT_EVENT_MONITOR_INTERVAL_MINUTES=5
-AGENT_EVENT_ALERT_RULES_JSON=[{"stock_code":"600519","alert_type":"price_cross","direction":"above","price":1800},{"stock_code":"300750","alert_type":"price_change_percent","direction":"down","change_pct":3.0},{"stock_code":"000858","alert_type":"volume_spike","multiplier":2.5}]
+AGENT_EVENT_ALERT_RULES_JSON=[{"stock_code":"MSFT","alert_type":"price_cross","direction":"above","price":450},{"stock_code":"AAPL","alert_type":"price_change_percent","direction":"down","change_pct":3.0},{"stock_code":"NVDA","alert_type":"volume_spike","multiplier":2.5}]
 ```
 
 worker 会把 `triggered`、`skipped`、`degraded`、`failed` 写入 `alert_triggers` 作为评估历史；正常未触发不写历史。DB 持久化规则的 `triggered` 历史按 `rule_id + target + data_source + data_timestamp` 对同一数据点做 best-effort 去重，重复命中会复用最早一条触发记录，`data_timestamp` 缺失时不去重。真实触发后会把每个通知渠道的 attempt 写入 `alert_notifications`，并为 Alert API 创建的持久化规则写入 `alert_cooldowns` 业务冷却状态；若读取持久化冷却失败，worker 会临时使用进程内 fingerprint 防止 DB 异常期间重复推送。legacy `AGENT_EVENT_ALERT_RULES_JSON` 规则继续使用进程内 fingerprint 抑制，不写持久化冷却；通知基础设施的 `notification_noise.py` 降噪仍独立生效。Web 规则列表使用后端返回的 `cooldown_active` 判断冷却状态，避免浏览器本地时区解析影响展示。
