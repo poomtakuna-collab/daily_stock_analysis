@@ -2,9 +2,9 @@
 """
 Market context detection for LLM prompts.
 
-Detects the market (A-shares, HK, US) from a stock code and returns
-market-specific role descriptions so prompts are not hardcoded to a
-single market.
+Detects the market (US equities first, with HK/A-share/JP/KR/TW support)
+from a stock code and returns market-specific role descriptions so prompts
+are not hardcoded to a single market.
 
 Fixes: https://github.com/ZhuLinsen/daily_stock_analysis/issues/644
 """
@@ -51,7 +51,7 @@ def detect_market(stock_code: Optional[str]) -> str:
     return "cn"
 
 
-# -- Market-specific role descriptions --
+# -- US-first multi-market role descriptions --
 
 _MARKET_ROLES = {
     "cn": {
@@ -64,7 +64,7 @@ _MARKET_ROLES = {
     },
     "us": {
         "zh": "美股",
-        "en": "US stock",
+        "en": "US equity",
     },
     "jp": {
         "zh": "日股",
@@ -157,7 +157,7 @@ def get_market_role(stock_code: Optional[str], lang: str = "zh") -> str:
         lang: 'zh' or 'en'.
 
     Returns:
-        Role string like 'A 股投资分析' or 'US stock investment analysis'.
+        Role string like 'US equity investment analysis' or a market-specific equivalent.
     """
     market = detect_market(stock_code)
     lang_key = "en" if lang in ("en", "ko") else "zh"

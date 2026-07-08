@@ -5,7 +5,7 @@ Data tools — wraps DataFetcherManager methods as agent-callable tools.
 Tools:
 - get_realtime_quote: real-time stock quote
 - get_daily_history: historical OHLCV data
-- get_chip_distribution: chip distribution analysis
+- get_chip_distribution: optional A-share chip distribution analysis
 - get_analysis_context: historical analysis context from DB
 """
 
@@ -275,7 +275,7 @@ get_realtime_quote_tool = ToolDefinition(
         ToolParameter(
             name="stock_code",
             type="string",
-            description="Stock code, e.g., '600519' (A-share), 'AAPL' (US), 'hk00700' (HK)",
+            description="Stock code, e.g., 'AAPL' (US), 'MSFT' (US), 'hk00700' (HK), '600519' (A-share)",
         ),
     ],
     handler=_handle_get_realtime_quote,
@@ -349,7 +349,7 @@ get_daily_history_tool = ToolDefinition(
         ToolParameter(
             name="stock_code",
             type="string",
-            description="Stock code, e.g., '600519' (A-share), 'AAPL' (US)",
+            description="Stock code, e.g., 'AAPL' (US), 'MSFT' (US), '600519' (A-share)",
         ),
         ToolParameter(
             name="days",
@@ -393,14 +393,14 @@ def _handle_get_chip_distribution(stock_code: str) -> dict:
 
 get_chip_distribution_tool = ToolDefinition(
     name="get_chip_distribution",
-    description="Get chip distribution analysis for a stock. Returns profit ratio, "
+    description="Get optional A-share chip distribution analysis for a stock. Returns profit ratio, "
                 "average cost, chip concentration at 90% and 70% levels. "
-                "Useful for judging support/resistance and holding structure.",
+                "Use only when this A-share-specific data is available; otherwise rely on US/HK volume and liquidity context.",
     parameters=[
         ToolParameter(
             name="stock_code",
             type="string",
-            description="A-share stock code, e.g., '600519'",
+            description="A-share stock code, e.g., '600519'; this tool is optional and not used for US tickers",
         ),
     ],
     handler=_handle_get_chip_distribution,
@@ -441,7 +441,7 @@ get_analysis_context_tool = ToolDefinition(
         ToolParameter(
             name="stock_code",
             type="string",
-            description="Stock code, e.g., '600519'",
+            description="Stock code, e.g., 'AAPL' (US), 'MSFT' (US), '600519' (A-share)",
         ),
     ],
     handler=_handle_get_analysis_context,
@@ -491,14 +491,14 @@ def _handle_get_stock_info(stock_code: str) -> dict:
 
 get_stock_info_tool = ToolDefinition(
     name="get_stock_info",
-    description="Get stock fundamental information: valuation, growth, earnings, institution flow, "
+    description="Get stock fundamental information for US-first multi-market research: valuation, growth, earnings, institution flow, "
                 "stock sector membership (belong_boards; boards is compatibility alias) and "
                 "sector rankings. Returns a compact fundamental_context to reduce token usage.",
     parameters=[
         ToolParameter(
             name="stock_code",
             type="string",
-            description="A-share stock code, e.g., '600519'",
+            description="Stock code, e.g., 'AAPL' (US), 'MSFT' (US), '600519' (A-share)",
         ),
     ],
     handler=_handle_get_stock_info,
@@ -674,16 +674,16 @@ def _handle_get_capital_flow(stock_code: str) -> dict:
 get_capital_flow_tool = ToolDefinition(
     name="get_capital_flow",
     description=(
-        "Get main-force (主力) capital flow data for an A-share stock. "
+        "Get optional A-share main-force capital flow data. "
         "Returns today's net inflow, 5-day and 10-day cumulative inflows, "
         "and top sector-level capital flow rankings. "
-        "Only supported for A-share individual stocks (not ETFs, indices, HK, or US stocks)."
+        "Only supported for A-share individual stocks; use capital_flow_signal=not_available for US/HK stocks unless another flow source is provided."
     ),
     parameters=[
         ToolParameter(
             name="stock_code",
             type="string",
-            description="A-share stock code, e.g., '600519'",
+            description="A-share stock code, e.g., '600519'; not supported for US tickers such as 'AAPL'",
         ),
     ],
     handler=_handle_get_capital_flow,

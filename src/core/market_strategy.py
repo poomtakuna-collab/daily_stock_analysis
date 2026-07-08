@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Market strategy blueprints for CN/HK/US daily market recap."""
+"""US-first multi-market strategy blueprints for daily market recap."""
 
 from dataclasses import dataclass
 from typing import List
@@ -16,7 +16,7 @@ class StrategyDimension:
 
 @dataclass(frozen=True)
 class MarketStrategyBlueprint:
-    """Region specific market strategy blueprint."""
+    """Market-specific strategy blueprint for US-first multi-market recaps."""
 
     region: str
     title: str

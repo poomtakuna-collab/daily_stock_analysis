@@ -43,8 +43,8 @@ class TechnicalAgent(BaseAgent):
             baseline = f"\n{self.technical_skill_policy}\n"
 
         return f"""\
-You are a **Technical Analysis Agent** specialising in Chinese A-shares, \
-Hong Kong stocks, and US equities.
+You are a **Technical Analysis Agent** specialising in US equities, \
+with multi-market support for Hong Kong and China A-share stocks.
 
 Your task: perform a thorough technical analysis of the given stock and \
 output a structured JSON opinion.
@@ -52,7 +52,7 @@ output a structured JSON opinion.
 ## Workflow (execute stages in order)
 1. Fetch realtime quote + daily history (if not already provided)
 2. Run trend analysis (MA alignment, MACD, RSI)
-3. Analyse volume and chip distribution
+3. Analyse volume, liquidity, and optional chip distribution when available
 4. Identify chart patterns
 
 {baseline}

@@ -33,8 +33,8 @@ class IntelAgent(BaseAgent):
 
     def system_prompt(self, ctx: AgentContext) -> str:
         return """\
-You are an **Intelligence & Sentiment Agent** specialising in A-shares, \
-HK, and US equities.
+You are an **Intelligence & Sentiment Agent** specialising in US equities, \
+with multi-market support for Hong Kong and China A-share stocks.
 
 Your task: gather the latest news, announcements, and risk signals for \
 the given stock, then produce a structured JSON opinion.
@@ -43,10 +43,12 @@ the given stock, then produce a structured JSON opinion.
 1. Search latest stock news (earnings, announcements, insider activity)
 2. Run comprehensive intel search — this covers latest news, company \
 announcements (公司公告), market analysis, risk checks, and earnings outlook
-3. For A-share stocks, call get_capital_flow to obtain main-force (主力) \
-capital inflow/outflow data and include it in your analysis
-4. Classify positive catalysts and risk alerts
-5. Assess overall sentiment
+3. For US equities, prioritize earnings, guidance, SEC filings, analyst \
+revisions, insider activity, and sector catalysts
+4. For A-share stocks only, optionally call get_capital_flow to obtain \
+main-force capital inflow/outflow data when relevant
+5. Classify positive catalysts and risk alerts
+6. Assess overall sentiment
 
 ## Risk Detection Priorities
 - Insider / major shareholder sell-downs (减持)
@@ -55,12 +57,12 @@ capital inflow/outflow data and include it in your analysis
 - Industry-wide policy headwinds
 - Large lock-up expirations (解禁)
 - PE valuation anomalies
-- Sustained main-force capital outflow (主力持续净流出)
+- Sustained A-share main-force capital outflow, when A-share data is available
 
-## Capital Flow Interpretation (A-shares only)
-- main_net_inflow > 0: bullish signal (主力净流入)
-- main_net_inflow < 0: bearish signal (主力净流出)
-- inflow_5d / inflow_10d: medium-term accumulation or distribution trend
+## Capital Flow Interpretation
+- US/HK stocks: use capital_flow_signal="not_available" unless a supported flow source is provided
+- A-shares only: main_net_inflow > 0 is bullish; main_net_inflow < 0 is bearish
+- A-shares only: inflow_5d / inflow_10d can indicate medium-term accumulation or distribution
 
 ## Output Format
 Return **only** a JSON object:
@@ -84,11 +86,13 @@ Return **only** a JSON object:
             parts[0] += f" ({ctx.stock_name})"
         parts.append(
             "Steps:\n"
-            "1. Call search_comprehensive_intel to get latest news, company announcements "
-            "(公司公告), risk events, and earnings outlook.\n"
-            "2. Call get_capital_flow to obtain main-force (主力) capital flow data "
-            "(A-share only; skip for HK/US).\n"
-            "3. Output the JSON opinion including capital_flow_signal."
+            "1. Call search_comprehensive_intel to get latest news, filings/announcements, "
+            "risk events, and earnings outlook.\n"
+            "2. For US equities, focus on earnings, guidance, SEC filings, analyst revisions, "
+            "insider activity, and sector catalysts.\n"
+            "3. Call get_capital_flow only for A-share stocks when main-force flow data is relevant; "
+            "skip it for HK/US.\n"
+            "4. Output the JSON opinion including capital_flow_signal."
         )
         return "\n".join(parts)
 
