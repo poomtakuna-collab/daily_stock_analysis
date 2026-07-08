@@ -29,6 +29,11 @@ Each market module should expose a consistent capability contract, for example:
 
 The core should call capabilities through market-aware interfaces instead of branching directly on hardcoded region names.
 
+The initial registry skeleton is intentionally importable and testable only. It
+must not be wired into production analysis, provider routing, prompts,
+strategies, runtime defaults, Ollama logic, or structured-output handling until
+later migration phases.
+
 ## Core Analysis
 
 Core Analysis includes capabilities that remain valid across markets when supplied with normalized market data.
