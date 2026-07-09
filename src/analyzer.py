@@ -4659,28 +4659,30 @@ class GeminiAnalyzer:
                 "AnalysisReportSchema validation failed; continuing with raw parser contract: %s",
                 str(exc)[:200],
             )
-        minimal_keys = {
+        required_keys = {
             "sentiment_score",
             "trend_prediction",
             "operation_advice",
             "analysis_summary",
-            "dashboard",
         }
-        if not any(key in data for key in minimal_keys):
+        missing_keys = sorted(key for key in required_keys if key not in data)
+        if missing_keys:
             raise self._generation_validation_error(
                 GenerationErrorCode.SCHEMA_VALIDATION_FAILED,
                 reason="minimal_contract_failed",
-                message="analysis JSON does not contain any minimal parser field",
+                message=(
+                    "analysis JSON is missing required top-level parser fields: "
+                    + ", ".join(missing_keys)
+                ),
             )
-        if "sentiment_score" in data:
-            try:
-                int(data.get("sentiment_score", 50))
-            except (TypeError, ValueError) as exc:
-                raise self._generation_validation_error(
-                    GenerationErrorCode.SCHEMA_VALIDATION_FAILED,
-                    reason="parser_contract_failed",
-                    message="sentiment_score must be integer-compatible",
-                ) from exc
+        try:
+            int(data["sentiment_score"])
+        except (TypeError, ValueError) as exc:
+            raise self._generation_validation_error(
+                GenerationErrorCode.SCHEMA_VALIDATION_FAILED,
+                reason="parser_contract_failed",
+                message="sentiment_score must be integer-compatible",
+            ) from exc
 
     def _generation_validation_error(
         self,
@@ -4761,7 +4763,7 @@ class GeminiAnalyzer:
                 code=code,
                 name=name,
                 # 核心指标
-                sentiment_score=int(data.get('sentiment_score', 50)),
+                sentiment_score=int(data['sentiment_score']),
                 trend_prediction=data.get('trend_prediction', localize_trend_prediction('震荡', report_language)),
                 operation_advice=data.get('operation_advice', localize_operation_advice('持有', report_language)),
                 decision_type=decision_type,

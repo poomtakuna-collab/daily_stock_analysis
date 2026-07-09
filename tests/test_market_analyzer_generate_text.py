@@ -2415,7 +2415,12 @@ class TestAnalyzerGenerateText:
         )
 
         import json as _json
-        valid_json = _json.dumps({"sentiment_score": 70, "trend_prediction": "看多"})
+        valid_json = _json.dumps({
+            "sentiment_score": 70,
+            "trend_prediction": "看多",
+            "operation_advice": "持有",
+            "analysis_summary": "ok",
+        })
         dispatch_calls = []
 
         def fake_dispatch(model, call_kwargs, **kwargs):

@@ -214,6 +214,7 @@ class TestAnalyzerSchemaFallback(unittest.TestCase):
 {
   "stock_name": "贵州茅台",
   "sentiment_score": 68,
+  "analysis_summary": "ok",
   "trend_prediction": "看多",
   "operation_advice": "持有",
 }
@@ -249,6 +250,7 @@ class TestAnalyzerSchemaFallback(unittest.TestCase):
 {
   "stock_name": "贵州茅台",
   "sentiment_score": 69,
+  "analysis_summary": "ok",
   "trend_prediction": "看多",
   "operation_advice": "持有",
   "dashboard": {"core_conclusion": {"one_sentence": "继续观察",},},
@@ -343,6 +345,55 @@ class TestAnalyzerSchemaFallback(unittest.TestCase):
             analyzer._validate_json_response('{"stock_name": "贵州茅台"}')
 
         self.assertEqual(getattr(context.exception, "details", {}).get("reason"), "minimal_contract_failed")
+
+    def test_parse_response_rejects_dashboard_only_without_silent_50(self) -> None:
+        analyzer = GeminiAnalyzer()
+        response = json.dumps({
+            "dashboard": {
+                "core_conclusion": {
+                    "one_sentence": "watch",
+                },
+            },
+            "checklist": {
+                "data_quality": "ok",
+            },
+        })
+
+        result = analyzer._parse_response(response, "AVGO", "Broadcom Inc.")
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.code, "AVGO")
+        self.assertIn("JSON", result.error_message)
+
+    def test_parse_response_rejects_missing_top_level_sentiment_score(self) -> None:
+        analyzer = GeminiAnalyzer()
+        response = json.dumps({
+            "trend_prediction": "hold",
+            "operation_advice": "hold",
+            "analysis_summary": "wait for confirmation",
+        })
+
+        result = analyzer._parse_response(response, "MSFT", "Microsoft")
+
+        self.assertFalse(result.success)
+        self.assertIn("JSON", result.error_message)
+
+    def test_dashboard_sentiment_score_is_not_top_level_score(self) -> None:
+        analyzer = GeminiAnalyzer()
+        response = json.dumps({
+            "trend_prediction": "hold",
+            "operation_advice": "hold",
+            "analysis_summary": "wait for confirmation",
+            "dashboard": {
+                "sentiment_score": 82,
+            },
+        })
+
+        result = analyzer._parse_response(response, "AAPL", "Apple")
+
+        self.assertFalse(result.success)
+        self.assertNotEqual(result.sentiment_score, 82)
+        self.assertIn("JSON", result.error_message)
 
     def test_validate_json_response_rejects_parser_unconstructable_sentiment(self) -> None:
         analyzer = GeminiAnalyzer.__new__(GeminiAnalyzer)
