@@ -1,0 +1,85 @@
+# -*- coding: utf-8 -*-
+"""Indicator registry skeletons.
+
+Sprint 16 intentionally keeps this package disconnected from production
+analysis flows. The registry is importable and testable, but analyzers,
+prompts, strategies, dashboards, and provider routing still use their existing
+paths.
+"""
+
+from src.indicators_registry.base import Indicator, IndicatorMetadata
+from src.indicators_registry.indicators import (
+    ATR_INDICATOR_ID,
+    CAPITAL_FLOW_INDICATOR_ID,
+    CHIP_DISTRIBUTION_INDICATOR_ID,
+    CONCEPT_BOARD_INDICATOR_ID,
+    EMA_INDICATOR_ID,
+    EARNINGS_TREND_INDICATOR_ID,
+    LIMIT_UP_INDICATOR_ID,
+    MACD_INDICATOR_ID,
+    MARKET_BREADTH_INDICATOR_ID,
+    RELATIVE_STRENGTH_INDICATOR_ID,
+    RSI_INDICATOR_ID,
+    SECTOR_LEADERSHIP_INDICATOR_ID,
+    SMA_INDICATOR_ID,
+    VOLUME_INDICATOR_ID,
+    VWAP_INDICATOR_ID,
+    ATRIndicator,
+    CapitalFlowIndicator,
+    ChipDistributionIndicator,
+    ConceptBoardIndicator,
+    EMAIndicator,
+    EarningsTrendIndicator,
+    LimitUpIndicator,
+    MACDIndicator,
+    MarketBreadthIndicator,
+    RSIIndicator,
+    RelativeStrengthIndicator,
+    SMAIndicator,
+    SectorLeadershipIndicator,
+    VWAPIndicator,
+    VolumeIndicator,
+)
+from src.indicators_registry.registry import (
+    IndicatorRegistry,
+    UnknownIndicatorError,
+    build_default_indicator_registry,
+)
+
+__all__ = [
+    "ATRIndicator",
+    "ATR_INDICATOR_ID",
+    "CAPITAL_FLOW_INDICATOR_ID",
+    "CHIP_DISTRIBUTION_INDICATOR_ID",
+    "CONCEPT_BOARD_INDICATOR_ID",
+    "CapitalFlowIndicator",
+    "ChipDistributionIndicator",
+    "ConceptBoardIndicator",
+    "EMAIndicator",
+    "EMA_INDICATOR_ID",
+    "EARNINGS_TREND_INDICATOR_ID",
+    "EarningsTrendIndicator",
+    "Indicator",
+    "IndicatorMetadata",
+    "IndicatorRegistry",
+    "LIMIT_UP_INDICATOR_ID",
+    "LimitUpIndicator",
+    "MACDIndicator",
+    "MACD_INDICATOR_ID",
+    "MARKET_BREADTH_INDICATOR_ID",
+    "MarketBreadthIndicator",
+    "RELATIVE_STRENGTH_INDICATOR_ID",
+    "RSIIndicator",
+    "RSI_INDICATOR_ID",
+    "RelativeStrengthIndicator",
+    "SECTOR_LEADERSHIP_INDICATOR_ID",
+    "SMAIndicator",
+    "SMA_INDICATOR_ID",
+    "SectorLeadershipIndicator",
+    "UnknownIndicatorError",
+    "VOLUME_INDICATOR_ID",
+    "VWAPIndicator",
+    "VWAP_INDICATOR_ID",
+    "VolumeIndicator",
+    "build_default_indicator_registry",
+]
