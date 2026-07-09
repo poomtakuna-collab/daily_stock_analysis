@@ -29,6 +29,29 @@ class ChinaMarketModule(MarketModule):
             "capital_flow",
             "limit_up_down",
         }),
+        indicators=(
+            "moving_average",
+            "rsi",
+            "macd",
+            "chip_distribution",
+        ),
+        data_sources=(
+            "akshare",
+            "tushare",
+            "efinance",
+            "baostock",
+        ),
+        review_sections=(
+            "market_overview",
+            "capital_flow",
+            "policy_context",
+            "limit_up_down",
+        ),
+        llm_features=(
+            "policy_context",
+            "capital_flow_summary",
+            "theme_rotation",
+        ),
         placeholder=True,
     )
 

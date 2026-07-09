@@ -30,6 +30,29 @@ class USMarketModule(MarketModule):
             "insider_activity",
             "social_sentiment",
         }),
+        indicators=(
+            "moving_average",
+            "rsi",
+            "macd",
+            "earnings_momentum",
+        ),
+        data_sources=(
+            "yfinance",
+            "alphavantage",
+            "finnhub",
+            "sec_filings",
+        ),
+        review_sections=(
+            "market_overview",
+            "sector_rotation",
+            "earnings_context",
+            "risk_factors",
+        ),
+        llm_features=(
+            "earnings_context",
+            "sec_filing_summary",
+            "social_sentiment",
+        ),
         placeholder=True,
     )
 

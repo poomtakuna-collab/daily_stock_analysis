@@ -46,6 +46,46 @@ def test_placeholder_modules_declare_market_specific_capabilities():
     assert registry.get("us").supports("social_sentiment")
 
 
+def test_market_modules_expose_capability_metadata_methods():
+    modules = (ChinaMarketModule(), USMarketModule())
+
+    for module in modules:
+        assert hasattr(module, "supported_indicators")
+        assert hasattr(module, "supported_data_sources")
+        assert hasattr(module, "supported_review_sections")
+        assert hasattr(module, "supported_llm_features")
+
+        assert list(module.supported_indicators())
+        assert list(module.supported_data_sources())
+        assert list(module.supported_review_sections())
+        assert list(module.supported_llm_features())
+
+
+def test_china_module_declares_placeholder_capability_metadata():
+    module = ChinaMarketModule()
+
+    assert "chip_distribution" in module.supported_indicators()
+    assert "akshare" in module.supported_data_sources()
+    assert "capital_flow" in module.supported_review_sections()
+    assert "policy_context" in module.supported_llm_features()
+
+
+def test_us_module_declares_placeholder_capability_metadata():
+    module = USMarketModule()
+
+    assert "earnings_momentum" in module.supported_indicators()
+    assert "sec_filings" in module.supported_data_sources()
+    assert "earnings_context" in module.supported_review_sections()
+    assert "sec_filing_summary" in module.supported_llm_features()
+
+
+def test_registry_retrieved_modules_keep_capability_metadata_available():
+    registry = build_default_market_module_registry()
+
+    assert "capital_flow" in registry.get("cn").supported_review_sections()
+    assert "social_sentiment" in registry.get("us").supported_llm_features()
+
+
 def test_unknown_market_raises_registry_error():
     registry = build_default_market_module_registry()
 
